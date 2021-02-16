@@ -1,14 +1,17 @@
 package scot.massie.mc.ninti.core;
 
+import com.mojang.brigadier.tree.LiteralCommandNode;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.Minecraft;
+import net.minecraft.command.CommandSource;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.world.DimensionType;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -59,6 +62,10 @@ public class NintiCore
     {
         // do something when the server starts
     }
+
+    @SubscribeEvent
+    public void registerCommands(RegisterCommandsEvent event)
+    { event.getDispatcher().register(PermissionCommandHandler.permissionCommand); }
 
     @SubscribeEvent
     public void onSave(final WorldEvent.Save worldSaveEvent)
