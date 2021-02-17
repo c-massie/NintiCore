@@ -1,13 +1,14 @@
 package scot.massie.mc.ninti.core;
 
-import com.mojang.brigadier.Command;
-import com.mojang.brigadier.arguments.ArgumentType;
+import com.google.common.base.Suppliers;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
-import com.mojang.brigadier.suggestion.Suggestions;
-import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import joptsimple.internal.Strings;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
@@ -18,12 +19,17 @@ import net.minecraft.util.text.Style;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraftforge.common.UsernameCache;
 
+import javax.annotation.ParametersAreNonnullByDefault;
+import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
-import static scot.massie.mc.ninti.core.StaticUtilFunctions.*;
+import static scot.massie.mc.ninti.core.StaticUtilFunctions.getLastKnownUUIDOfPlayer;
+import static scot.massie.mc.ninti.core.StaticUtilFunctions.sendMessage;
 
-public class PermissionCommandHandler
+public class PermissionsCommandHandler
 {
     private static final class TargetReferenced
     {
@@ -93,6 +99,73 @@ public class PermissionCommandHandler
     permissions help
      */
 
+    //region Suggestion caches
+//    static LoadingCache<UUID, List<String>> cachedSuggestions
+//            = CacheBuilder.newBuilder()
+//                          .maximumSize(10000)
+//                          .expireAfterWrite(1, TimeUnit.MINUTES)
+//                          .build(new CacheLoader<UUID, List<String>>()
+//    {
+//        @Override @ParametersAreNonnullByDefault
+//        public List<String> load(UUID key)
+//        { return Permissions.getSuggestedPermissions(); }
+//    });
+
+    static LoadingCache<UUID, List<String>> cachedSuggestionsToAddToPlayers
+            = CacheBuilder.newBuilder()
+                          .maximumSize(10000)
+                          .expireAfterWrite(1, TimeUnit.MINUTES)
+                          .build(new CacheLoader<UUID, List<String>>()
+    {
+        @Override @ParametersAreNonnullByDefault
+        public List<String> load(UUID key)
+        {
+            return Permissions.getSuggestedPermissions()
+                              .stream()
+                              .filter(s -> !Permissions.playerHasPermission(key, s))
+                              .collect(Collectors.toList());
+        }
+    });
+
+    static LoadingCache<String, List<String>> cachedSuggestionsToAddToGroups
+            = CacheBuilder.newBuilder().maximumSize(10000).expireAfterWrite(1, TimeUnit.MINUTES).build(new CacheLoader<String, List<String>>()
+    {
+        @Override @ParametersAreNonnullByDefault
+        public List<String> load(String key) throws Exception
+        {
+            return Permissions.getSuggestedPermissions()
+                              .stream()
+                              .filter(s -> !Permissions.groupHasPermission(key, s))
+                              .collect(Collectors.toList());
+        }
+    });
+
+    static LoadingCache<UUID, List<String>> cachedSuggestionsToRemoveFromPlayers
+            = CacheBuilder.newBuilder()
+                          .maximumSize(10000)
+                          .expireAfterWrite(1, TimeUnit.MINUTES)
+                          .build(new CacheLoader<UUID, List<String>>()
+    {
+        @Override @ParametersAreNonnullByDefault
+        public List<String> load(UUID key)
+        { return Permissions.getGroupsAndPermissionsOfPlayer(key); }
+    });
+
+    static LoadingCache<String, List<String>> cachedSuggestionsToRemoveFromGroups
+            = CacheBuilder.newBuilder()
+                          .maximumSize(10000)
+                          .expireAfterWrite(1, TimeUnit.MINUTES)
+                          .build(new CacheLoader<String, List<String>>()
+    {
+        @Override @ParametersAreNonnullByDefault
+        public List<String> load(String key)
+        { return Permissions.getGroupsAndPermissionsOfGroup(key); }
+    });
+
+    static Supplier<List<String>> cachedSuggestionsToSuggest
+            = Suppliers.memoizeWithExpiration(Permissions::getSuggestedPermissions, 1, TimeUnit.MINUTES);
+    //endregion
+
     private static final SuggestionProvider<CommandSource> playerNameOrGroupIdSuggestionProvider
             = (context, builder) ->
     {
@@ -105,48 +178,89 @@ public class PermissionCommandHandler
         return builder.buildFuture();
     };
 
-    private static final SuggestionProvider<CommandSource> permissionsCurrentlyHasSuggestionProvider
+    private static final SuggestionProvider<CommandSource> suggestedPermissionsToAddProvider
             = (context, builder) ->
     {
-        TargetReferenced targ = new TargetReferenced(MessageArgument.getMessage(context, "target").getString());
+        TargetReferenced targ = new TargetReferenced(StringArgumentType.getString(context, "target"));
 
         if(targ.isForGroup())
-            for(String s : Permissions.getGroupsAndPermissionsOfGroup(targ.getGroupName()))
-                builder.suggest(s);
+        {
+            for(String suggestion : cachedSuggestionsToAddToGroups.getUnchecked(targ.getGroupName()))
+                if(suggestion.startsWith(builder.getRemaining()))
+                    builder.suggest(suggestion);
+        }
         else if(targ.hasPlayerId())
-            for(String s : Permissions.getGroupsAndPermissionsOfPlayer(targ.getPlayerId()))
-                builder.suggest(s);
+        {
+            for(String suggestion : cachedSuggestionsToAddToPlayers.getUnchecked(targ.getPlayerId()))
+                if(suggestion.startsWith(builder.getRemaining()))
+                    builder.suggest(suggestion);
+        }
 
         return builder.buildFuture();
     };
 
+    private static final SuggestionProvider<CommandSource> suggestedPermissionsToRemoveProvider
+            = (context, builder) ->
+    {
+        TargetReferenced targ = new TargetReferenced(StringArgumentType.getString(context, "target"));
+
+        if(targ.isForGroup())
+        {
+            for(String suggestion : cachedSuggestionsToRemoveFromGroups.getUnchecked(targ.getGroupName()))
+                if(suggestion.startsWith(builder.getRemaining()))
+                    builder.suggest(suggestion);
+        }
+        else if(targ.hasPlayerId())
+        {
+            for(String suggestion : cachedSuggestionsToRemoveFromPlayers.getUnchecked(targ.getPlayerId()))
+                if(suggestion.startsWith(builder.getRemaining()))
+                    builder.suggest(suggestion);
+        }
+
+        return builder.buildFuture();
+    };
+
+    private static final SuggestionProvider<CommandSource> suggestedPermissionsProvider
+            = (context, builder) ->
+    {
+        for(String suggestion : cachedSuggestionsToSuggest.get())
+            if(suggestion.startsWith(builder.getRemaining()))
+                builder.suggest(suggestion);
+
+        return builder.buildFuture();
+    };
+
+    //region public static final LiteralArgumentBuilder<CommandSource> permissionCommand = ...
     public static final LiteralArgumentBuilder<CommandSource> permissionCommand
-            = Commands.literal("permission")
-                      .then(Commands.literal("save").executes(PermissionCommandHandler::cmdSave))
-                      .then(Commands.literal("load").executes(PermissionCommandHandler::cmdLoad))
+            = Commands.literal("permissions")
+                      .then(Commands.literal("save").executes(PermissionsCommandHandler::cmdSave))
+                      .then(Commands.literal("load").executes(PermissionsCommandHandler::cmdLoad))
                       .then(Commands.literal("list")
-                                    .then(Commands.argument("target", MessageArgument.message())
+                                    .then(Commands.argument("target", StringArgumentType.word())
                                                   .suggests(playerNameOrGroupIdSuggestionProvider)
-                                                  .executes(PermissionCommandHandler::cmdList)))
-                      .then(Commands.literal("listgroups").executes(PermissionCommandHandler::cmdListGroups))
+                                                  .executes(PermissionsCommandHandler::cmdList)))
+                      .then(Commands.literal("listgroups").executes(PermissionsCommandHandler::cmdListGroups))
                       .then(Commands.literal("add")
-                                    .then(Commands.argument("target", MessageArgument.message())
+                                    .then(Commands.argument("target", StringArgumentType.word())
                                                   .suggests(playerNameOrGroupIdSuggestionProvider)
                                                   .then(Commands.argument("permission to add", MessageArgument.message())
-                                                                .executes(PermissionCommandHandler::cmdAdd))))
+                                                                .suggests(suggestedPermissionsToAddProvider)
+                                                                .executes(PermissionsCommandHandler::cmdAdd))))
                       .then(Commands.literal("remove")
-                                    .then(Commands.argument("target", MessageArgument.message())
+                                    .then(Commands.argument("target", StringArgumentType.word())
                                                   .suggests(playerNameOrGroupIdSuggestionProvider)
                                                   .then(Commands.argument("permission to remove", MessageArgument.message())
-                                                                .suggests(permissionsCurrentlyHasSuggestionProvider)
-                                                                .executes(PermissionCommandHandler::cmdRemove))))
+                                                                .suggests(suggestedPermissionsToRemoveProvider)
+                                                                .executes(PermissionsCommandHandler::cmdRemove))))
                       .then(Commands.literal("has")
-                                    .then(Commands.argument("target", MessageArgument.message())
+                                    .then(Commands.argument("target", StringArgumentType.word())
                                                   .suggests(playerNameOrGroupIdSuggestionProvider)
                                                   .then(Commands.argument("permission to check", MessageArgument.message())
-                                                                .executes(PermissionCommandHandler::cmdHas))))
-                      .then(Commands.literal("help").executes(PermissionCommandHandler::cmdHelp))
-                      .executes(PermissionCommandHandler::cmdHelp);
+                                                                .suggests(suggestedPermissionsProvider)
+                                                                .executes(PermissionsCommandHandler::cmdHas))))
+                      .then(Commands.literal("help").executes(PermissionsCommandHandler::cmdHelp))
+                      .executes(PermissionsCommandHandler::cmdHelp);
+    //endregion
 
     private static int cmdSave(CommandContext<CommandSource> commandContext)
     {
@@ -162,7 +276,7 @@ public class PermissionCommandHandler
 
     private static int cmdList(CommandContext<CommandSource> commandContext) throws CommandSyntaxException
     {
-        TargetReferenced targ = new TargetReferenced(MessageArgument.getMessage(commandContext, "target").getString());
+        TargetReferenced targ = new TargetReferenced(StringArgumentType.getString(commandContext, "target"));
 
         if(targ.isForGroup())
         {
@@ -195,7 +309,7 @@ public class PermissionCommandHandler
 
     private static int cmdAdd(CommandContext<CommandSource> commandContext) throws CommandSyntaxException
     {
-        TargetReferenced targ = new TargetReferenced(MessageArgument.getMessage(commandContext, "target").getString());
+        TargetReferenced targ = new TargetReferenced(StringArgumentType.getString(commandContext, "target"));
         String permissionAsString = MessageArgument.getMessage(commandContext, "permission to add").getString();
 
         if(targ.isForGroup())
@@ -216,7 +330,7 @@ public class PermissionCommandHandler
 
     private static int cmdRemove(CommandContext<CommandSource> commandContext) throws CommandSyntaxException
     {
-        TargetReferenced targ = new TargetReferenced(MessageArgument.getMessage(commandContext, "target").getString());
+        TargetReferenced targ = new TargetReferenced(StringArgumentType.getString(commandContext, "target"));
         String permissionAsString = MessageArgument.getMessage(commandContext, "permission to remove").getString();
 
         if(targ.isForGroup())
@@ -237,7 +351,7 @@ public class PermissionCommandHandler
 
     private static int cmdHas(CommandContext<CommandSource> commandContext) throws CommandSyntaxException
     {
-        TargetReferenced targ = new TargetReferenced(MessageArgument.getMessage(commandContext, "target").getString());
+        TargetReferenced targ = new TargetReferenced(StringArgumentType.getString(commandContext, "target"));
         String permissionAsString = MessageArgument.getMessage(commandContext, "permission to check").getString();
 
         if(targ.isForGroup())

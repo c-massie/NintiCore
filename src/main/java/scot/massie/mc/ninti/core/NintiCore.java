@@ -1,36 +1,15 @@
 package scot.massie.mc.ninti.core;
 
-import com.mojang.brigadier.tree.LiteralCommandNode;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.client.Minecraft;
-import net.minecraft.command.CommandSource;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.world.DimensionType;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.InterModComms;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
-import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.stream.Collectors;
 
 import static scot.massie.mc.ninti.core.StaticUtilFunctions.*;
 
@@ -65,7 +44,7 @@ public class NintiCore
 
     @SubscribeEvent
     public void registerCommands(RegisterCommandsEvent event)
-    { event.getDispatcher().register(PermissionCommandHandler.permissionCommand); }
+    { event.getDispatcher().register(PermissionsCommandHandler.permissionCommand); }
 
     @SubscribeEvent
     public void onSave(final WorldEvent.Save worldSaveEvent)
