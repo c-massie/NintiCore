@@ -25,6 +25,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static scot.massie.mc.ninti.core.StaticUtilFunctions.getLastKnownUUIDOfPlayer;
 import static scot.massie.mc.ninti.core.StaticUtilFunctions.sendMessage;
@@ -99,18 +100,7 @@ public class PermissionsCommandHandler
     permissions help
      */
 
-    //region Suggestion caches
-//    static LoadingCache<UUID, List<String>> cachedSuggestions
-//            = CacheBuilder.newBuilder()
-//                          .maximumSize(10000)
-//                          .expireAfterWrite(1, TimeUnit.MINUTES)
-//                          .build(new CacheLoader<UUID, List<String>>()
-//    {
-//        @Override @ParametersAreNonnullByDefault
-//        public List<String> load(UUID key)
-//        { return Permissions.getSuggestedPermissions(); }
-//    });
-
+    //region Suggestion provider caches
     static LoadingCache<UUID, List<String>> cachedSuggestionsToAddToPlayers
             = CacheBuilder.newBuilder()
                           .maximumSize(10000)
@@ -120,10 +110,14 @@ public class PermissionsCommandHandler
         @Override @ParametersAreNonnullByDefault
         public List<String> load(UUID key)
         {
-            return Permissions.getSuggestedPermissions()
-                              .stream()
-                              .filter(s -> !Permissions.playerHasPermission(key, s))
-                              .collect(Collectors.toList());
+            return Stream.concat(Permissions.getGroupNames()
+                                            .stream()
+                                            .filter(x -> !Permissions.playerIsInGroup(key, x))
+                                            .map(x -> "#" + x),
+                                 Permissions.getSuggestedPermissions()
+                                            .stream()
+                                            .filter(x -> !Permissions.playerHasPermission(key, x)))
+                         .collect(Collectors.toList());
         }
     });
 
@@ -133,10 +127,14 @@ public class PermissionsCommandHandler
         @Override @ParametersAreNonnullByDefault
         public List<String> load(String key) throws Exception
         {
-            return Permissions.getSuggestedPermissions()
-                              .stream()
-                              .filter(s -> !Permissions.groupHasPermission(key, s))
-                              .collect(Collectors.toList());
+            return Stream.concat(Permissions.getGroupNames()
+                                            .stream()
+                                            .filter(x -> !Permissions.groupIsInGroup(key, x))
+                                            .map(x -> "#" + x),
+                                 Permissions.getSuggestedPermissions()
+                                            .stream()
+                                            .filter(x -> !Permissions.groupHasPermission(key, x)))
+                         .collect(Collectors.toList());
         }
     });
 
@@ -163,9 +161,10 @@ public class PermissionsCommandHandler
     });
 
     static Supplier<List<String>> cachedSuggestionsToSuggest
-            = Suppliers.memoizeWithExpiration(Permissions::getSuggestedPermissions, 1, TimeUnit.MINUTES);
+            = Suppliers.memoizeWithExpiration(Permissions::getGroupsAndSuggestedPermissions, 1, TimeUnit.MINUTES);
     //endregion
 
+    //region Suggestion providers
     private static final SuggestionProvider<CommandSource> playerNameOrGroupIdSuggestionProvider
             = (context, builder) ->
     {
@@ -229,6 +228,7 @@ public class PermissionsCommandHandler
 
         return builder.buildFuture();
     };
+    //endregion
 
     //region public static final LiteralArgumentBuilder<CommandSource> permissionCommand = ...
     public static final LiteralArgumentBuilder<CommandSource> permissionCommand

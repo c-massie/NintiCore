@@ -104,6 +104,17 @@ public final class Permissions
         return suggestions;
     }
 
+    static List<String> getGroupsAndSuggestedPermissions()
+    {
+        List<String> result = new ArrayList<>();
+
+        for(String groupName : registry.getGroupNames())
+            result.add("#" + groupName);
+
+        result.addAll(getSuggestedPermissions());
+        return result;
+    }
+
     public static boolean playerHasPermission(PlayerEntity player, String permission)
     { return registry.userHasPermission(player.getUniqueID(), permission); }
 
@@ -112,6 +123,15 @@ public final class Permissions
 
     public static boolean groupHasPermission(String groupId, String permission)
     { return registry.groupHasPermission(groupId, permission); }
+
+    public static boolean playerIsInGroup(PlayerEntity player, String groupId)
+    { return registry.userHasGroup(player.getUniqueID(), groupId); }
+
+    public static boolean playerIsInGroup(UUID playerId, String groupId)
+    { return registry.userHasGroup(playerId, groupId); }
+
+    public static boolean groupIsInGroup(String groupId, String superGroupId)
+    { return registry.groupExtendsFromGroup(groupId, superGroupId); }
 
     public static void assignPlayerPermission(PlayerEntity player, String permission)
     { assignPlayerPermission(player.getUniqueID(), permission); }
