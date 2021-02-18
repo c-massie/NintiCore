@@ -116,13 +116,23 @@ public final class Permissions
     }
 
     public static boolean playerHasPermission(PlayerEntity player, String permission)
-    { return registry.userHasPermission(player.getUniqueID(), permission); }
+    { return playerHasPermission(player.getUniqueID(), permission); }
 
     public static boolean playerHasPermission(UUID playerId, String permission)
-    { return registry.userHasPermission(playerId, permission); }
+    {
+        if(permission.startsWith("#"))
+            return playerIsInGroup(playerId, permission.substring(1));
+
+        return registry.userHasPermission(playerId, permission);
+    }
 
     public static boolean groupHasPermission(String groupId, String permission)
-    { return registry.groupHasPermission(groupId, permission); }
+    {
+        if(permission.startsWith("#"))
+            return groupIsInGroup(groupId, permission.substring(1));
+
+        return registry.groupHasPermission(groupId, permission);
+    }
 
     public static boolean playerIsInGroup(PlayerEntity player, String groupId)
     { return registry.userHasGroup(player.getUniqueID(), groupId); }
