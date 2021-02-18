@@ -30,7 +30,7 @@ import java.util.stream.Stream;
 import static scot.massie.mc.ninti.core.StaticUtilFunctions.getLastKnownUUIDOfPlayer;
 import static scot.massie.mc.ninti.core.StaticUtilFunctions.sendMessage;
 
-public class PermissionsCommandHandler
+public final class PermissionsCommandHandler
 {
     private static final class TargetReferenced
     {
@@ -100,11 +100,16 @@ public class PermissionsCommandHandler
     permissions help
      */
 
+    private PermissionsCommandHandler()
+    {}
+
+    private static final int cacheTimeoutInSeconds = 15;
+
     //region Suggestion provider caches
     static LoadingCache<UUID, List<String>> cachedSuggestionsToAddToPlayers
             = CacheBuilder.newBuilder()
                           .maximumSize(10000)
-                          .expireAfterWrite(1, TimeUnit.MINUTES)
+                          .expireAfterWrite(cacheTimeoutInSeconds, TimeUnit.SECONDS)
                           .build(new CacheLoader<UUID, List<String>>()
     {
         @Override @ParametersAreNonnullByDefault
@@ -122,7 +127,10 @@ public class PermissionsCommandHandler
     });
 
     static LoadingCache<String, List<String>> cachedSuggestionsToAddToGroups
-            = CacheBuilder.newBuilder().maximumSize(10000).expireAfterWrite(1, TimeUnit.MINUTES).build(new CacheLoader<String, List<String>>()
+            = CacheBuilder.newBuilder()
+                          .maximumSize(10000)
+                          .expireAfterWrite(cacheTimeoutInSeconds, TimeUnit.SECONDS)
+                          .build(new CacheLoader<String, List<String>>()
     {
         @Override @ParametersAreNonnullByDefault
         public List<String> load(String key) throws Exception
@@ -141,7 +149,7 @@ public class PermissionsCommandHandler
     static LoadingCache<UUID, List<String>> cachedSuggestionsToRemoveFromPlayers
             = CacheBuilder.newBuilder()
                           .maximumSize(10000)
-                          .expireAfterWrite(1, TimeUnit.MINUTES)
+                          .expireAfterWrite(cacheTimeoutInSeconds, TimeUnit.SECONDS)
                           .build(new CacheLoader<UUID, List<String>>()
     {
         @Override @ParametersAreNonnullByDefault
@@ -152,7 +160,7 @@ public class PermissionsCommandHandler
     static LoadingCache<String, List<String>> cachedSuggestionsToRemoveFromGroups
             = CacheBuilder.newBuilder()
                           .maximumSize(10000)
-                          .expireAfterWrite(1, TimeUnit.MINUTES)
+                          .expireAfterWrite(cacheTimeoutInSeconds, TimeUnit.SECONDS)
                           .build(new CacheLoader<String, List<String>>()
     {
         @Override @ParametersAreNonnullByDefault
@@ -161,7 +169,9 @@ public class PermissionsCommandHandler
     });
 
     static Supplier<List<String>> cachedSuggestionsToSuggest
-            = Suppliers.memoizeWithExpiration(Permissions::getGroupsAndSuggestedPermissions, 1, TimeUnit.MINUTES);
+            = Suppliers.memoizeWithExpiration(Permissions::getGroupsAndSuggestedPermissions,
+                                              cacheTimeoutInSeconds,
+                                              TimeUnit.SECONDS);
     //endregion
 
     //region Suggestion providers
