@@ -1,6 +1,7 @@
 package scot.massie.mc.ninti.core;
 
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraftforge.common.UsernameCache;
 import scot.massie.lib.events.Event;
 import scot.massie.lib.events.SetEvent;
 import scot.massie.lib.events.args.EventArgs;
@@ -66,8 +67,18 @@ public final class Permissions
     private Permissions()
     {}
 
+    /**
+     * This is defined in the UUID contract. See {@link UUID#toString}.
+     */
+    static final int uuidStringLength = 36;
+
     private static final PermissionsRegistry<UUID> registry = new PermissionsRegistry<>(
-            UUID::toString, UUID::fromString, Paths.get("permissions.txt"), Paths.get("permission_groups.txt"));
+            uuid -> (UsernameCache.containsUUID(uuid))
+                            ? (uuid.toString() + " - " + UsernameCache.getLastKnownUsername(uuid))
+                            : (uuid.toString()),
+            name -> UUID.fromString(name.substring(0, uuidStringLength)),
+            Paths.get("permissions.txt"),
+            Paths.get("permission_groups.txt"));
 
     private static final Set<String> permissionsToBeSuggested = new HashSet<>();
     static
