@@ -11,8 +11,11 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -88,7 +91,44 @@ public final class Permissions
         permissionsToBeSuggested.add("final.permission.to.be.suggested");
     }
 
+    private static final Map<String, Set<String>> defaultRolePermissions = new HashMap<>();
+
     public static final Event<PermissionsAreBeingSuggestedEventArgs> permissionsAreBeingSuggested = new SetEvent<>();
+
+    public static void addRolePermission(String roleName, String permission)
+    { defaultRolePermissions.computeIfAbsent(roleName, s -> new HashSet<>()).add(permission); }
+
+    public static void assignGroupRolePermissions(String groupId, String roleName)
+    {
+        Set<String> perms = defaultRolePermissions.get(roleName);
+
+        if(perms == null)
+            return;
+
+        for(String perm : perms)
+            registry.assignGroupPermission(groupId, perm);
+    }
+
+    public static void assignPlayerRolePermissions(UUID playerId, String roleName)
+    {
+        Set<String> perms = defaultRolePermissions.get(roleName);
+
+        if(perms == null)
+            return;
+
+        for(String perm : perms)
+            registry.assignUserPermission(playerId, roleName);
+    }
+
+    public static void assignPlayerRolePermissions(PlayerEntity player, String roleName)
+    { assignPlayerRolePermissions(player.getUniqueID(), roleName); }
+
+    public static List<String> getDefaultRoles()
+    {
+        List<String> result = new ArrayList<>(defaultRolePermissions.keySet());
+        result.sort(Comparator.naturalOrder());
+        return result;
+    }
 
     public static void addSuggestedPermission(String permission)
     { permissionsToBeSuggested.add(permission); }
