@@ -73,31 +73,34 @@ public final class Permissions
         private Presets()
         {}
 
-        Map<String, Set<String>> presets = new HashMap<>();
+        private static final Map<String, Set<String>> presets = new HashMap<>();
 
-        public List<String> getPresetNames()
+        public static List<String> getPresetNames()
         {
             List<String> presetNames = new ArrayList<>(presets.keySet());
             presetNames.sort(Comparator.naturalOrder());
             return presetNames;
         }
 
-        public Collection<String> getPresetPermissions(String presetName)
+        public static Collection<String> getPresetPermissions(String presetName)
         {
             Set<String> preset = presets.getOrDefault(presetName, null);
             return preset != null ? Collections.unmodifiableCollection(preset) : Collections.emptySet();
         }
 
-        public void addPermission(String presetName, String permission)
+        public static Map<String, Set<String>> getPresets()
+        { return Collections.unmodifiableMap(presets); }
+
+        public static void addPermission(String presetName, String permission)
         { presets.computeIfAbsent(presetName, s -> new HashSet<>()).add(permission); }
 
-        public void addPermissions(String presetName, String... permissions)
+        public static void addPermissions(String presetName, String... permissions)
         { Collections.addAll(presets.computeIfAbsent(presetName, s -> new HashSet<>()), permissions); }
 
-        public void addPermissions(String presetName, Collection<String> permissions)
+        public static void addPermissions(String presetName, Collection<String> permissions)
         { presets.computeIfAbsent(presetName, s -> new HashSet<>()).addAll(permissions); }
 
-        public void assignToPlayer(String presetName, UUID playerId)
+        public static void assignToPlayer(String presetName, UUID playerId)
         {
             Set<String> presetPerms = presets.get(presetName);
 
@@ -105,10 +108,10 @@ public final class Permissions
                 assignPlayerPermission(playerId, perm);
         }
 
-        public void assignToPlayer(String presetName, PlayerEntity player)
+        public static void assignToPlayer(String presetName, PlayerEntity player)
         { assignToPlayer(presetName, player.getUniqueID()); }
 
-        public void assignToGroup(String presetName, String groupName)
+        public static void assignToGroup(String presetName, String groupName)
         {
             Set<String> presetPerms = presets.get(presetName);
 
@@ -339,5 +342,14 @@ public final class Permissions
         { registry.load(); }
         catch(IOException e)
         { throw new RuntimeException("Error loading permissions files.", e); }
+    }
+
+    static void initialisePermissionsWithPresets()
+    {
+        registry.clear();
+
+        for(Map.Entry<String, Set<String>> preset : Presets.getPresets().entrySet())
+            for(String perm : preset.getValue())
+                registry.assignGroupPermission(preset.getKey(), perm);
     }
 }
