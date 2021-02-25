@@ -119,7 +119,7 @@ public final class PermissionsCommandHandler
                                             .stream()
                                             .filter(x -> !Permissions.playerIsInGroup(key, x))
                                             .map(x -> "#" + x),
-                                 Permissions.getSuggestedPermissions()
+                                 Permissions.Suggestions.get()
                                             .stream()
                                             .filter(x -> !Permissions.playerHasPermission(key, x)))
                          .collect(Collectors.toList());
@@ -139,7 +139,7 @@ public final class PermissionsCommandHandler
                                             .stream()
                                             .filter(x -> !Permissions.groupIsInGroup(key, x))
                                             .map(x -> "#" + x),
-                                 Permissions.getSuggestedPermissions()
+                                 Permissions.Suggestions.get()
                                             .stream()
                                             .filter(x -> !Permissions.groupHasPermission(key, x)))
                          .collect(Collectors.toList());

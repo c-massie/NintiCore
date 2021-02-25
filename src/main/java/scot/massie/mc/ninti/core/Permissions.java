@@ -10,6 +10,7 @@ import scot.massie.lib.permissions.PermissionsRegistry;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -67,6 +68,91 @@ public final class Permissions
         { return Collections.unmodifiableSet(suggestedPermissions); }
     }
 
+    public static final class Presets
+    {
+        private Presets()
+        {}
+
+        Map<String, Set<String>> presets = new HashMap<>();
+
+        public List<String> getPresetNames()
+        {
+            List<String> presetNames = new ArrayList<>(presets.keySet());
+            presetNames.sort(Comparator.naturalOrder());
+            return presetNames;
+        }
+
+        public Collection<String> getPresetPermissions(String presetName)
+        {
+            Set<String> preset = presets.getOrDefault(presetName, null);
+            return preset != null ? Collections.unmodifiableCollection(preset) : Collections.emptySet();
+        }
+
+        public void addPermission(String presetName, String permission)
+        { presets.computeIfAbsent(presetName, s -> new HashSet<>()).add(permission); }
+
+        public void addPermissions(String presetName, String... permissions)
+        { Collections.addAll(presets.computeIfAbsent(presetName, s -> new HashSet<>()), permissions); }
+
+        public void addPermissions(String presetName, Collection<String> permissions)
+        { presets.computeIfAbsent(presetName, s -> new HashSet<>()).addAll(permissions); }
+
+        public void assignToPlayer(String presetName, UUID playerId)
+        {
+            Set<String> presetPerms = presets.get(presetName);
+
+            for(String perm : presetPerms)
+                assignPlayerPermission(playerId, perm);
+        }
+
+        public void assignToPlayer(String presetName, PlayerEntity player)
+        { assignToPlayer(presetName, player.getUniqueID()); }
+
+        public void assignToGroup(String presetName, String groupName)
+        {
+            Set<String> presetPerms = presets.get(presetName);
+
+            for(String perm : presetPerms)
+                assignGroupPermission(groupName, perm);
+        }
+    }
+
+    public static final class Suggestions
+    {
+        private Suggestions()
+        {}
+
+        private static final Set<String> permissionsToBeSuggested = new HashSet<>();
+        static
+        {
+
+        }
+
+        public static final Event<PermissionsAreBeingSuggestedEventArgs> beingSuggested = new SetEvent<>();
+
+        // not public for now, until I decide whether to pass arguments to pass into the event args.
+        static List<String> get()
+        {
+            PermissionsAreBeingSuggestedEventArgs eventArgs
+                    = new PermissionsAreBeingSuggestedEventArgs(permissionsToBeSuggested);
+
+            beingSuggested.invoke(eventArgs);
+
+            List<String> suggestions = new ArrayList<>(eventArgs.getSuggestedPermissions());
+            suggestions.sort(Comparator.naturalOrder());
+            return suggestions;
+        }
+
+        public static void add(String permission)
+        { permissionsToBeSuggested.add(permission); }
+
+        public static void add(String... permissions)
+        { Collections.addAll(permissionsToBeSuggested, permissions); }
+
+        public static void add(Collection<String> permissions)
+        { permissionsToBeSuggested.addAll(permissions); }
+    }
+
     private Permissions()
     {}
 
@@ -83,78 +169,6 @@ public final class Permissions
             Paths.get("permissions.txt"),
             Paths.get("permission_groups.txt"));
 
-    private static final Set<String> permissionsToBeSuggested = new HashSet<>();
-    static
-    {
-        permissionsToBeSuggested.add("my.first.suggested.permission");
-        permissionsToBeSuggested.add("another.suggested.permission");
-        permissionsToBeSuggested.add("final.permission.to.be.suggested");
-    }
-
-    private static final Map<String, Set<String>> defaultRolePermissions = new HashMap<>();
-
-    public static final Event<PermissionsAreBeingSuggestedEventArgs> permissionsAreBeingSuggested = new SetEvent<>();
-
-    public static void addRolePermission(String roleName, String permission)
-    { defaultRolePermissions.computeIfAbsent(roleName, s -> new HashSet<>()).add(permission); }
-
-    public static void assignGroupRolePermissions(String groupId, String roleName)
-    {
-        Set<String> perms = defaultRolePermissions.get(roleName);
-
-        if(perms == null)
-            return;
-
-        for(String perm : perms)
-            registry.assignGroupPermission(groupId, perm);
-    }
-
-    public static void assignPlayerRolePermissions(UUID playerId, String roleName)
-    {
-        Set<String> perms = defaultRolePermissions.get(roleName);
-
-        if(perms == null)
-            return;
-
-        for(String perm : perms)
-            registry.assignUserPermission(playerId, roleName);
-    }
-
-    public static void assignPlayerRolePermissions(PlayerEntity player, String roleName)
-    { assignPlayerRolePermissions(player.getUniqueID(), roleName); }
-
-    public static List<String> getDefaultRoles()
-    {
-        List<String> result = new ArrayList<>(defaultRolePermissions.keySet());
-        result.sort(Comparator.naturalOrder());
-        return result;
-    }
-
-    public static void addSuggestedPermission(String permission)
-    { permissionsToBeSuggested.add(permission); }
-
-    public static void addSuggestedPermissions(List<String> permissions)
-    { permissionsToBeSuggested.addAll(permissions); }
-
-    public static void addSuggestedPermissions(String... permissions)
-    { Collections.addAll(permissionsToBeSuggested, permissions); }
-
-    // not public for now, until I decide whether to pass arguments to pass into the event args.
-    static List<String> getSuggestedPermissions()
-    {
-        PermissionsAreBeingSuggestedEventArgs eventArgs
-                = new PermissionsAreBeingSuggestedEventArgs(permissionsToBeSuggested);
-
-        System.out.println("permissionsToBeSuggested.size(): " + permissionsToBeSuggested.size());
-
-        permissionsAreBeingSuggested.invoke(eventArgs);
-
-        List<String> suggestions = new ArrayList<>(eventArgs.getSuggestedPermissions());
-        System.out.println("suggestions.size(): " + suggestions.size());
-        Collections.sort(suggestions);
-        return suggestions;
-    }
-
     static List<String> getGroupsAndSuggestedPermissions()
     {
         List<String> result = new ArrayList<>();
@@ -162,7 +176,7 @@ public final class Permissions
         for(String groupName : registry.getGroupNames())
             result.add("#" + groupName);
 
-        result.addAll(getSuggestedPermissions());
+        result.addAll(Suggestions.get());
         return result;
     }
 
