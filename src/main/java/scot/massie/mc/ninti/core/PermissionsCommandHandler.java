@@ -287,25 +287,25 @@ public final class PermissionsCommandHandler
 
     private static int cmdSave(CommandContext<CommandSource> commandContext)
     {
-        Permissions.savePermissions();
+        Permissions.save();
         return 1;
     }
 
     private static int cmdLoad(CommandContext<CommandSource> commandContext)
     {
-        Permissions.loadPermissions();
+        Permissions.load();
         return 1;
     }
 
     private static int cmdInitialiseBlank(CommandContext<CommandSource> commandContext)
     {
-        Permissions.clear();
+        Permissions.Write.clear();
         return 1;
     }
 
     private static int cmdInitialisePresets(CommandContext<CommandSource> commandContext)
     {
-        Permissions.initialisePermissionsWithPresets();
+        Permissions.Write.initialisePermissionsWithPresets();
         return 1;
     }
 
@@ -349,13 +349,13 @@ public final class PermissionsCommandHandler
 
         if(targ.isForGroup())
         {
-            Permissions.assignGroupPermission(targ.getGroupName(), permissionAsString);
+            Permissions.Write.assignGroupPermission(targ.getGroupName(), permissionAsString);
             return 1;
         }
 
         if(targ.hasPlayerId())
         {
-            Permissions.assignPlayerPermission(targ.getPlayerId(), permissionAsString);
+            Permissions.Write.assignPlayerPermission(targ.getPlayerId(), permissionAsString);
             return 1;
         }
 
@@ -370,13 +370,13 @@ public final class PermissionsCommandHandler
 
         if(targ.isForGroup())
         {
-            Permissions.revokeGroupPermission(targ.getGroupName(), permissionAsString);
+            Permissions.Write.revokeGroupPermission(targ.getGroupName(), permissionAsString);
             return 1;
         }
 
         if(targ.hasPlayerId())
         {
-            Permissions.revokePlayerPermission(targ.getPlayerId(), permissionAsString);
+            Permissions.Write.revokePlayerPermission(targ.getPlayerId(), permissionAsString);
             return 1;
         }
 

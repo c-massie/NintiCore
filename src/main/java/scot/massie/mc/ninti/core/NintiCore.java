@@ -32,7 +32,7 @@ public class NintiCore
     private void setup(final FMLCommonSetupEvent event)
     {
         // some preinit code
-        Permissions.loadPermissions();
+        Permissions.load();
     }
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call
@@ -52,7 +52,7 @@ public class NintiCore
         if(!(getWorldId(worldSaveEvent).equals("minecraft:overworld")))
             return;
 
-        Permissions.savePermissions();
+        Permissions.save();
     }
 
     @Mod.EventBusSubscriber(bus=Mod.EventBusSubscriber.Bus.MOD)

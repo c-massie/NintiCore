@@ -126,13 +126,13 @@ public final class Permissions
         }
 
         public static void assignToPlayer(String presetName, UUID playerId)
-        { Permissions.assignPlayerPreset(playerId, presetName); }
+        { Permissions.Write.assignPlayerPreset(playerId, presetName); }
 
         public static void assignToPlayer(String presetName, PlayerEntity player)
         { assignToPlayer(presetName, player.getUniqueID()); }
 
         public static void assignToGroup(String presetName, String groupName)
-        { Permissions.assignGroupPreset(groupName, presetName); }
+        { Permissions.Write.assignGroupPreset(groupName, presetName); }
     }
 
     public static final class Suggestions
@@ -180,6 +180,162 @@ public final class Permissions
             synchronized(permissionsToBeSuggested)
             { permissionsToBeSuggested.addAll(permissions); }
         }
+    }
+
+    public static final class Write
+    {
+        private Write()
+        {}
+
+        //region assign permissions/groups
+        public static void assignPlayerPermission(PlayerEntity player, String permission)
+        { assignPlayerPermission(player.getUniqueID(), permission); }
+
+        public static void assignPlayerPermission(UUID playerId, String permission)
+        {
+            if(permission.startsWith("#"))
+            {
+                assignPlayerGroup(playerId, permission.substring(1));
+                return;
+            }
+            else if(permission.startsWith("@"))
+            {
+                assignPlayerPreset(playerId, permission.substring(1));
+                return;
+            }
+
+            synchronized(registry)
+            { registry.assignUserPermission(playerId, permission); }
+        }
+
+        public static void assignGroupPermission(String groupId, String permission)
+        {
+            if(permission.startsWith("#"))
+            {
+                assignPermissionGroupGroup(groupId, permission.substring(1));
+                return;
+            }
+            else if(permission.startsWith("@"))
+            {
+                assignGroupPreset(groupId, permission.substring(1));
+                return;
+            }
+
+            synchronized(registry)
+            { registry.assignGroupPermission(groupId, permission); }
+        }
+
+        public static void assignPlayerGroup(PlayerEntity player, String groupId)
+        {
+            synchronized(registry)
+            { registry.assignGroupToUser(player.getUniqueID(), groupId); }
+        }
+
+        public static void assignPlayerGroup(UUID playerId, String groupId)
+        {
+            synchronized(registry)
+            { registry.assignGroupToUser(playerId, groupId); }
+        }
+
+        public static void assignPermissionGroupGroup(String groupIdBeingAssignedTo, String groupIdBeingAssigned)
+        {
+            synchronized(registry)
+            { registry.assignGroupToGroup(groupIdBeingAssignedTo, groupIdBeingAssigned); }
+        }
+
+        public static void assignPlayerPreset(UUID playerId, String presetName)
+        {
+            Collection<String> perms = Presets.getPresetPermissions(presetName);
+
+            synchronized(registry)
+            {
+                for(String perm : perms)
+                    registry.assignUserPermission(playerId, perm);
+            }
+        }
+
+        public static void assignPlayerPreset(PlayerEntity player, String presetName)
+        { assignPlayerPreset(player.getUniqueID(), presetName); }
+
+        public static void assignGroupPreset(String groupId, String presetName)
+        {
+            Collection<String> perms = Presets.getPresetPermissions(presetName);
+
+            synchronized(registry)
+            {
+                for(String perm : perms)
+                    registry.assignGroupPermission(groupId, presetName);
+            }
+        }
+        //endregion
+        //region revoke permissions/groups
+        public static void revokePlayerPermission(PlayerEntity player, String permission)
+        { revokePlayerPermission(player.getUniqueID(), permission); }
+
+        public static void revokePlayerPermission(UUID playerId, String permission)
+        {
+            if(permission.startsWith("#"))
+            {
+                removePlayerFromGroup(playerId, permission.substring(1));
+                return;
+            }
+
+            synchronized(registry)
+            { registry.revokeUserPermission(playerId, permission); }
+        }
+
+        public static void revokeGroupPermission(String groupId, String permission)
+        {
+            if(permission.startsWith("#"))
+            {
+                removeGroupFromGroup(groupId, permission.substring(1));
+                return;
+            }
+
+            synchronized(registry)
+            { registry.revokeGroupPermission(groupId, permission); }
+        }
+
+        public static void removePlayerFromGroup(PlayerEntity player, String groupId)
+        {
+            synchronized(registry)
+            { registry.revokeGroupFromUser(player.getUniqueID(), groupId); }
+        }
+
+        public static void removePlayerFromGroup(UUID playerId, String groupId)
+        {
+            synchronized(registry)
+            { registry.revokeGroupFromUser(playerId, groupId); }
+        }
+
+        public static void removeGroupFromGroup(String groupIdBeingDeassigned, String groupIdBeingRemovedFrom)
+        {
+            synchronized(registry)
+            { registry.revokeGroupFromGroup(groupIdBeingDeassigned, groupIdBeingRemovedFrom); }
+        }
+        //endregion
+        //region clear
+        static void clear()
+        {
+            synchronized(registry)
+            { registry.clear(); }
+        }
+        //endregion
+        //region initialising
+        static void initialisePermissionsWithPresets()
+        {
+            Set<Map.Entry<String, Set<String>>> presets = Presets.getPresets().entrySet();
+
+            synchronized(registry)
+            {
+                registry.clear();
+
+                for(Map.Entry<String, Set<String>> preset : presets)
+                    for(String perm : preset.getValue())
+                        registry.assignGroupPermission(preset.getKey(), perm);
+            }
+        }
+        //endregion
     }
     //endregion
     //endregion
@@ -352,142 +508,10 @@ public final class Permissions
     //endregion
     //endregion
     //region mutators
-    //region assign permissions/groups
-    public static void assignPlayerPermission(PlayerEntity player, String permission)
-    { assignPlayerPermission(player.getUniqueID(), permission); }
 
-    public static void assignPlayerPermission(UUID playerId, String permission)
-    {
-        if(permission.startsWith("#"))
-        {
-            assignPlayerGroup(playerId, permission.substring(1));
-            return;
-        }
-        else if(permission.startsWith("@"))
-        {
-            assignPlayerPreset(playerId, permission.substring(1));
-            return;
-        }
-
-        synchronized(registry)
-        { registry.assignUserPermission(playerId, permission); }
-    }
-
-    public static void assignGroupPermission(String groupId, String permission)
-    {
-        if(permission.startsWith("#"))
-        {
-            assignPermissionGroupGroup(groupId, permission.substring(1));
-            return;
-        }
-        else if(permission.startsWith("@"))
-        {
-            assignGroupPreset(groupId, permission.substring(1));
-            return;
-        }
-
-        synchronized(registry)
-        { registry.assignGroupPermission(groupId, permission); }
-    }
-
-    public static void assignPlayerGroup(PlayerEntity player, String groupId)
-    {
-        synchronized(registry)
-        { registry.assignGroupToUser(player.getUniqueID(), groupId); }
-    }
-
-    public static void assignPlayerGroup(UUID playerId, String groupId)
-    {
-        synchronized(registry)
-        { registry.assignGroupToUser(playerId, groupId); }
-    }
-
-    public static void assignPermissionGroupGroup(String groupIdBeingAssignedTo, String groupIdBeingAssigned)
-    {
-        synchronized(registry)
-        { registry.assignGroupToGroup(groupIdBeingAssignedTo, groupIdBeingAssigned); }
-    }
-
-    public static void assignPlayerPreset(UUID playerId, String presetName)
-    {
-        Collection<String> perms = Presets.getPresetPermissions(presetName);
-
-        synchronized(registry)
-        {
-            for(String perm : perms)
-                registry.assignUserPermission(playerId, perm);
-        }
-    }
-
-    public static void assignPlayerPreset(PlayerEntity player, String presetName)
-    { assignPlayerPreset(player.getUniqueID(), presetName); }
-
-    public static void assignGroupPreset(String groupId, String presetName)
-    {
-        Collection<String> perms = Presets.getPresetPermissions(presetName);
-
-        synchronized(registry)
-        {
-            for(String perm : perms)
-                registry.assignGroupPermission(groupId, presetName);
-        }
-    }
     //endregion
-    //region revoke permissions/groups
-    public static void revokePlayerPermission(PlayerEntity player, String permission)
-    { revokePlayerPermission(player.getUniqueID(), permission); }
-
-    public static void revokePlayerPermission(UUID playerId, String permission)
-    {
-        if(permission.startsWith("#"))
-        {
-            removePlayerFromGroup(playerId, permission.substring(1));
-            return;
-        }
-
-        synchronized(registry)
-        { registry.revokeUserPermission(playerId, permission); }
-    }
-
-    public static void revokeGroupPermission(String groupId, String permission)
-    {
-        if(permission.startsWith("#"))
-        {
-            removeGroupFromGroup(groupId, permission.substring(1));
-            return;
-        }
-
-        synchronized(registry)
-        { registry.revokeGroupPermission(groupId, permission); }
-    }
-
-    public static void removePlayerFromGroup(PlayerEntity player, String groupId)
-    {
-        synchronized(registry)
-        { registry.revokeGroupFromUser(player.getUniqueID(), groupId); }
-    }
-
-    public static void removePlayerFromGroup(UUID playerId, String groupId)
-    {
-        synchronized(registry)
-        { registry.revokeGroupFromUser(playerId, groupId); }
-    }
-
-    public static void removeGroupFromGroup(String groupIdBeingDeassigned, String groupIdBeingRemovedFrom)
-    {
-        synchronized(registry)
-        { registry.revokeGroupFromGroup(groupIdBeingDeassigned, groupIdBeingRemovedFrom); }
-    }
-    //endregion
-    //region clear
-    static void clear()
-    {
-        synchronized(registry)
-        { registry.clear(); }
-    }
-    //endregion
-    //region saving/loading/initialising
-    public static void savePermissions()
+    //region saving & loading
+    public static void save()
     {
         synchronized(registry)
         {
@@ -501,7 +525,7 @@ public final class Permissions
         }
     }
 
-    public static void loadPermissions()
+    public static void load()
     {
         try
         {
@@ -511,21 +535,6 @@ public final class Permissions
         catch(IOException e)
         { throw new RuntimeException("Error loading permissions files.", e); }
     }
-
-    static void initialisePermissionsWithPresets()
-    {
-        Set<Map.Entry<String, Set<String>>> presets = Presets.getPresets().entrySet();
-
-        synchronized(registry)
-        {
-            registry.clear();
-
-            for(Map.Entry<String, Set<String>> preset : presets)
-                for(String perm : preset.getValue())
-                    registry.assignGroupPermission(preset.getKey(), perm);
-        }
-    }
-    //endregion
     //endregion
     //endregion
 }
