@@ -20,6 +20,7 @@ import net.minecraft.util.text.event.ClickEvent;
 import net.minecraftforge.common.UsernameCache;
 
 import javax.annotation.ParametersAreNonnullByDefault;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -137,14 +138,20 @@ public final class PermissionsCommandHandler
         @Override @ParametersAreNonnullByDefault
         public List<String> load(String key) throws Exception
         {
-            return Stream.concat(Permissions.getGroupNames()
-                                            .stream()
-                                            .filter(x -> !Permissions.groupIsInGroup(key, x))
-                                            .map(x -> "#" + x),
-                                 Permissions.Suggestions.get()
-                                            .stream()
-                                            .filter(x -> !Permissions.groupHasPermission(key, x)))
-                         .collect(Collectors.toList());
+            List<String> result = new ArrayList<>();
+
+            for(String presetName : Permissions.Presets.getPresetNames())
+                result.add("@" + presetName);
+
+            for(String groupName : Permissions.getGroupNames())
+                if(!Permissions.groupIsInGroup(key, groupName))
+                    result.add("#" + groupName);
+
+            for(String perm : Permissions.Suggestions.get())
+                if(!Permissions.groupHasPermission(key, perm))
+                    result.add(perm);
+
+            return result;
         }
     });
 
@@ -193,7 +200,6 @@ public final class PermissionsCommandHandler
             = (context, builder) ->
     {
         TargetReferenced targ = new TargetReferenced(StringArgumentType.getString(context, "target"));
-
         if(targ.isForGroup())
         {
             for(String suggestion : cachedSuggestionsToAddToGroups.getUnchecked(targ.getGroupName()))

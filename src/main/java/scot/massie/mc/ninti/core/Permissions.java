@@ -284,6 +284,11 @@ public final class Permissions
             assignPlayerGroup(playerId, permission.substring(1));
             return;
         }
+        else if(permission.startsWith("@"))
+        {
+            assignPlayerPreset(playerId, permission.substring(1));
+            return;
+        }
 
         registry.assignUserPermission(playerId, permission);
     }
@@ -293,6 +298,11 @@ public final class Permissions
         if(permission.startsWith("#"))
         {
             assignPermissionGroupGroup(groupId, permission.substring(1));
+            return;
+        }
+        else if(permission.startsWith("@"))
+        {
+            assignGroupPreset(groupId, permission.substring(1));
             return;
         }
 
@@ -307,6 +317,25 @@ public final class Permissions
 
     public static void assignPermissionGroupGroup(String groupIdBeingAssignedTo, String groupIdBeingAssigned)
     { registry.assignGroupToGroup(groupIdBeingAssignedTo, groupIdBeingAssigned); }
+
+    public static void assignPlayerPreset(UUID playerId, String presetName)
+    {
+        Collection<String> perms = Presets.getPresetPermissions(presetName);
+
+        for(String perm : Presets.getPresetPermissions(presetName))
+            registry.assignUserPermission(playerId, perm);
+    }
+
+    public static void assignPlayerPreset(PlayerEntity player, String presetName)
+    { assignPlayerPreset(player.getUniqueID(), presetName); }
+
+    public static void assignGroupPreset(String groupId, String presetName)
+    {
+        Collection<String> perms = Presets.getPresetPermissions(presetName);
+
+        for(String perm : Presets.getPresetPermissions(presetName))
+            registry.assignGroupPermission(groupId, presetName);
+    }
     //endregion
     //region revoke permissions/groups
     public static void revokePlayerPermission(PlayerEntity player, String permission)
