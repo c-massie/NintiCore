@@ -13,6 +13,8 @@ import joptsimple.internal.Strings;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.MessageArgument;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.Style;
@@ -24,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -107,6 +110,7 @@ public final class PermissionsCommandHandler
     {}
 
     private static final int cacheTimeoutInSeconds = 15;
+    private static final String dontHavePermission = "You don't have permission to do that.";
 
     //region Suggestion provider caches
     static LoadingCache<UUID, List<String>> cachedSuggestionsToAddToPlayers
@@ -177,6 +181,25 @@ public final class PermissionsCommandHandler
         { return Permissions.getGroupsAndPermissionsOfGroup(key); }
     });
 
+    static LoadingCache<CommandContext<CommandSource>, Boolean> cachedHasReadPermissions
+            = CacheBuilder.newBuilder()
+                          .maximumSize(10000)
+                          .expireAfterWrite(cacheTimeoutInSeconds, TimeUnit.SECONDS)
+                          .build(new CacheLoader<CommandContext<CommandSource>, Boolean>()
+    {
+        @Override @ParametersAreNonnullByDefault
+        public Boolean load(CommandContext<CommandSource> key) throws Exception
+        {
+            if(!(key.getSource().getEntity() instanceof PlayerEntity))
+                return true;
+
+            PlayerEntity player = key.getSource().asPlayer();
+
+            return Permissions.playerHasPermission(player, NintiCore.PERMISSION_READ_GROUPS)
+                && Permissions.playerHasPermission(player, NintiCore.PERMISSION_READ_PLAYERS);
+        }
+    });
+
     static Supplier<List<String>> cachedSuggestionsToSuggest
             = Suppliers.memoizeWithExpiration(Permissions::getGroupNamesAndSuggestedPermissions,
                                               cacheTimeoutInSeconds,
@@ -187,6 +210,9 @@ public final class PermissionsCommandHandler
     private static final SuggestionProvider<CommandSource> playerNameOrGroupIdSuggestionProvider
             = (context, builder) ->
     {
+        if(!cachedHasReadPermissions.getUnchecked(context))
+            return builder.buildFuture();
+
         for(String groupName : Permissions.getGroupNames())
             builder.suggest("#" + groupName);
 
@@ -199,6 +225,9 @@ public final class PermissionsCommandHandler
     private static final SuggestionProvider<CommandSource> suggestedPermissionsToAddProvider
             = (context, builder) ->
     {
+        if(!cachedHasReadPermissions.getUnchecked(context))
+            return builder.buildFuture();
+
         TargetReferenced targ = new TargetReferenced(StringArgumentType.getString(context, "target"));
         if(targ.isForGroup())
         {
@@ -219,6 +248,9 @@ public final class PermissionsCommandHandler
     private static final SuggestionProvider<CommandSource> suggestedPermissionsToRemoveProvider
             = (context, builder) ->
     {
+        if(!cachedHasReadPermissions.getUnchecked(context))
+            return builder.buildFuture();
+
         TargetReferenced targ = new TargetReferenced(StringArgumentType.getString(context, "target"));
 
         if(targ.isForGroup())
@@ -240,6 +272,9 @@ public final class PermissionsCommandHandler
     private static final SuggestionProvider<CommandSource> suggestedPermissionsProvider
             = (context, builder) ->
     {
+        if(!cachedHasReadPermissions.getUnchecked(context))
+            return builder.buildFuture();
+
         for(String suggestion : cachedSuggestionsToSuggest.get())
             if(suggestion.startsWith(builder.getRemaining()))
                 builder.suggest(suggestion);
@@ -284,27 +319,64 @@ public final class PermissionsCommandHandler
                       .then(Commands.literal("help").executes(PermissionsCommandHandler::cmdHelp))
                       .executes(PermissionsCommandHandler::cmdHelp);
     //endregion
+    private static boolean sourceHasPermission(CommandContext<CommandSource> commandContext, String... permissions)
+    {
+        Entity sourceEntity = commandContext.getSource().getEntity();
+
+        if(!(sourceEntity instanceof PlayerEntity))
+            return true;
+
+        for(int i = 0; i < permissions.length; i++)
+            if(!Permissions.playerHasPermission((PlayerEntity)sourceEntity, permissions[i]))
+                return false;
+
+        return true;
+    }
 
     private static int cmdSave(CommandContext<CommandSource> commandContext)
     {
+        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_FILEHANDLING_SAVE))
+        {
+            sendMessage(commandContext, dontHavePermission);
+            return 0;
+        }
+
         Permissions.save();
         return 1;
     }
 
     private static int cmdLoad(CommandContext<CommandSource> commandContext)
     {
+        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_FILEHANDLING_LOAD))
+        {
+            sendMessage(commandContext, dontHavePermission);
+            return 0;
+        }
+
         Permissions.load();
         return 1;
     }
 
     private static int cmdInitialiseBlank(CommandContext<CommandSource> commandContext)
     {
+        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_WRITE_GROUPS, NintiCore.PERMISSION_WRITE_PLAYERS))
+        {
+            sendMessage(commandContext, dontHavePermission);
+            return 0;
+        }
+
         Permissions.Write.clear();
         return 1;
     }
 
     private static int cmdInitialisePresets(CommandContext<CommandSource> commandContext)
     {
+        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_WRITE_GROUPS, NintiCore.PERMISSION_WRITE_PLAYERS))
+        {
+            sendMessage(commandContext, dontHavePermission);
+            return 0;
+        }
+
         Permissions.Write.initialisePermissionsWithPresets();
         return 1;
     }
@@ -315,10 +387,22 @@ public final class PermissionsCommandHandler
 
         if(targ.isForGroup())
         {
+            if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_READ_GROUPS))
+            {
+                sendMessage(commandContext, dontHavePermission);
+                return 0;
+            }
+
             String resultHeader = "Permissions for group " + targ.getGroupName() + ": ";
             String groupPerms = Strings.join(Permissions.getPermissionsOfGroup(targ.getGroupName()), "\n");
             sendMessage(commandContext, resultHeader + "\n" + groupPerms);
             return 1;
+        }
+
+        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_READ_PLAYERS))
+        {
+            sendMessage(commandContext, dontHavePermission);
+            return 0;
         }
 
         if(targ.hasPlayerId())
@@ -338,6 +422,12 @@ public final class PermissionsCommandHandler
 
     private static int cmdListGroups(CommandContext<CommandSource> commandContext)
     {
+        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_READ_GROUPS))
+        {
+            sendMessage(commandContext, dontHavePermission);
+            return 0;
+        }
+
         sendMessage(commandContext, "Groups:\n" + Strings.join(Permissions.getGroupNames(), "\n"));
         return 1;
     }
@@ -349,8 +439,20 @@ public final class PermissionsCommandHandler
 
         if(targ.isForGroup())
         {
+            if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_WRITE_GROUPS))
+            {
+                sendMessage(commandContext, dontHavePermission);
+                return 0;
+            }
+
             Permissions.Write.assignGroupPermission(targ.getGroupName(), permissionAsString);
             return 1;
+        }
+
+        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_WRITE_PLAYERS))
+        {
+            sendMessage(commandContext, dontHavePermission);
+            return 0;
         }
 
         if(targ.hasPlayerId())
@@ -370,8 +472,20 @@ public final class PermissionsCommandHandler
 
         if(targ.isForGroup())
         {
+            if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_WRITE_GROUPS))
+            {
+                sendMessage(commandContext, dontHavePermission);
+                return 0;
+            }
+
             Permissions.Write.revokeGroupPermission(targ.getGroupName(), permissionAsString);
             return 1;
+        }
+
+        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_WRITE_PLAYERS))
+        {
+            sendMessage(commandContext, dontHavePermission);
+            return 0;
         }
 
         if(targ.hasPlayerId())
@@ -391,12 +505,24 @@ public final class PermissionsCommandHandler
 
         if(targ.isForGroup())
         {
+            if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_READ_GROUPS))
+            {
+                sendMessage(commandContext, dontHavePermission);
+                return 0;
+            }
+
             boolean has = Permissions.groupHasPermission(targ.getGroupName(), permissionAsString);
 
             sendMessage(commandContext, "The group " + targ.getGroupName()
                                         + (has ? " has" : " does not have")
                                         + " the permission: " + permissionAsString);
             return 1;
+        }
+
+        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_READ_PLAYERS))
+        {
+            sendMessage(commandContext, dontHavePermission);
+            return 0;
         }
 
         if(targ.hasPlayerId())

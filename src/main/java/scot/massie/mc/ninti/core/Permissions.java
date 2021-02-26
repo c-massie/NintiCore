@@ -77,6 +77,11 @@ public final class Permissions
         private Presets()
         {}
 
+        public static final String ADMIN = "Admin";
+        public static final String MOD = "Mod";
+        public static final String PLAYER = "Player";
+        public static final String GUEST = "Guest";
+
         private static final Map<String, Set<String>> presets = new HashMap<>();
 
         public static List<String> getPresetNames()
@@ -506,9 +511,6 @@ public final class Permissions
     public static List<String> getGroupsAndPermissionsOfPlayer(PlayerEntity player)
     { return getGroupsAndPermissionsOfPlayer(player.getUniqueID()); }
     //endregion
-    //endregion
-    //region mutators
-
     //endregion
     //region saving & loading
     public static void save()
