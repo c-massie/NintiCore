@@ -92,6 +92,8 @@ public final class PermissionsCommandHandler
     /*
     permissions save
     permissions load
+    permissions initialise blank
+    permissions initialise presets
     permissions list [playername or group id]
     permissions listgroups
     permissions add [playername or group id] [permission as string]
@@ -245,6 +247,11 @@ public final class PermissionsCommandHandler
             = Commands.literal("permissions")
                       .then(Commands.literal("save").executes(PermissionsCommandHandler::cmdSave))
                       .then(Commands.literal("load").executes(PermissionsCommandHandler::cmdLoad))
+                      .then(Commands.literal("initialise")
+                                    .then(Commands.literal("blank")
+                                                  .executes(PermissionsCommandHandler::cmdInitialiseBlank))
+                                    .then(Commands.literal("presets")
+                                                  .executes(PermissionsCommandHandler::cmdInitialisePresets)))
                       .then(Commands.literal("list")
                                     .then(Commands.argument("target", StringArgumentType.word())
                                                   .suggests(playerNameOrGroupIdSuggestionProvider)
@@ -281,6 +288,18 @@ public final class PermissionsCommandHandler
     private static int cmdLoad(CommandContext<CommandSource> commandContext)
     {
         Permissions.loadPermissions();
+        return 1;
+    }
+
+    private static int cmdInitialiseBlank(CommandContext<CommandSource> commandContext)
+    {
+        Permissions.clear();
+        return 1;
+    }
+
+    private static int cmdInitialisePresets(CommandContext<CommandSource> commandContext)
+    {
+        Permissions.initialisePermissionsWithPresets();
         return 1;
     }
 

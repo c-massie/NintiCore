@@ -352,4 +352,7 @@ public final class Permissions
             for(String perm : preset.getValue())
                 registry.assignGroupPermission(preset.getKey(), perm);
     }
+
+    static void clear()
+    { registry.clear(); }
 }
