@@ -23,6 +23,8 @@ import java.util.stream.Collectors;
 
 public final class Permissions
 {
+    //region Inner classes
+    //region Event args
     public static final class PermissionsAreBeingSuggestedEventArgs implements EventArgs
     {
         PermissionsAreBeingSuggestedEventArgs(Set<String> suggestions)
@@ -67,7 +69,9 @@ public final class Permissions
         public Set<String> getSuggestedPermissions()
         { return Collections.unmodifiableSet(suggestedPermissions); }
     }
+    //endregion
 
+    //region Inner static function stores
     public static final class Presets
     {
         private Presets()
@@ -155,9 +159,13 @@ public final class Permissions
         public static void add(Collection<String> permissions)
         { permissionsToBeSuggested.addAll(permissions); }
     }
+    //endregion
+    //endregion
 
     private Permissions()
     {}
+
+    //region fields
 
     /**
      * This is defined in the UUID contract. See {@link UUID#toString}.
@@ -171,8 +179,45 @@ public final class Permissions
             name -> UUID.fromString(name.substring(0, uuidStringLength)),
             Paths.get("permissions.txt"),
             Paths.get("permission_groups.txt"));
+    //endregion
 
-    static List<String> getGroupsAndSuggestedPermissions()
+    //region methods
+    //region accessors
+    //region hasPermissions
+    public static boolean playerHasPermission(UUID playerId, String permission)
+    {
+        if(permission.startsWith("#"))
+            return playerIsInGroup(playerId, permission.substring(1));
+
+        return registry.userHasPermission(playerId, permission);
+    }
+
+    public static boolean playerHasPermission(PlayerEntity player, String permission)
+    { return playerHasPermission(player.getUniqueID(), permission); }
+
+    public static boolean groupHasPermission(String groupId, String permission)
+    {
+        if(permission.startsWith("#"))
+            return groupIsInGroup(groupId, permission.substring(1));
+
+        return registry.groupHasPermission(groupId, permission);
+    }
+    //endregion
+    //region isInGroup
+    public static boolean playerIsInGroup(UUID playerId, String groupId)
+    { return registry.userHasGroup(playerId, groupId); }
+
+    public static boolean playerIsInGroup(PlayerEntity player, String groupId)
+    { return registry.userHasGroup(player.getUniqueID(), groupId); }
+
+    public static boolean groupIsInGroup(String groupId, String superGroupId)
+    { return registry.groupExtendsFromGroup(groupId, superGroupId); }
+    //endregion
+    //region getters
+    public static List<String> getGroupNames()
+    { return registry.getGroupNames().stream().sorted().collect(Collectors.toList()); }
+
+    static List<String> getGroupNamesAndSuggestedPermissions()
     {
         List<String> result = new ArrayList<>();
 
@@ -182,105 +227,6 @@ public final class Permissions
         result.addAll(Suggestions.get());
         return result;
     }
-
-    public static boolean playerHasPermission(PlayerEntity player, String permission)
-    { return playerHasPermission(player.getUniqueID(), permission); }
-
-    public static boolean playerHasPermission(UUID playerId, String permission)
-    {
-        if(permission.startsWith("#"))
-            return playerIsInGroup(playerId, permission.substring(1));
-
-        return registry.userHasPermission(playerId, permission);
-    }
-
-    public static boolean groupHasPermission(String groupId, String permission)
-    {
-        if(permission.startsWith("#"))
-            return groupIsInGroup(groupId, permission.substring(1));
-
-        return registry.groupHasPermission(groupId, permission);
-    }
-
-    public static boolean playerIsInGroup(PlayerEntity player, String groupId)
-    { return registry.userHasGroup(player.getUniqueID(), groupId); }
-
-    public static boolean playerIsInGroup(UUID playerId, String groupId)
-    { return registry.userHasGroup(playerId, groupId); }
-
-    public static boolean groupIsInGroup(String groupId, String superGroupId)
-    { return registry.groupExtendsFromGroup(groupId, superGroupId); }
-
-    public static void assignPlayerPermission(PlayerEntity player, String permission)
-    { assignPlayerPermission(player.getUniqueID(), permission); }
-
-    public static void assignPlayerPermission(UUID playerId, String permission)
-    {
-        if(permission.startsWith("#"))
-        {
-            assignPlayerGroup(playerId, permission.substring(1));
-            return;
-        }
-
-        registry.assignUserPermission(playerId, permission);
-    }
-
-    public static void assignGroupPermission(String groupId, String permission)
-    {
-        if(permission.startsWith("#"))
-        {
-            assignPermissionGroupGroup(groupId, permission.substring(1));
-            return;
-        }
-
-        registry.assignGroupPermission(groupId, permission);
-    }
-
-    public static void assignPlayerGroup(PlayerEntity player, String groupId)
-    { registry.assignGroupToUser(player.getUniqueID(), groupId); }
-
-    public static void assignPlayerGroup(UUID playerId, String groupId)
-    { registry.assignGroupToUser(playerId, groupId); }
-
-    public static void assignPermissionGroupGroup(String groupIdBeingAssignedTo, String groupIdBeingAssigned)
-    { registry.assignGroupToGroup(groupIdBeingAssignedTo, groupIdBeingAssigned); }
-
-    public static void revokePlayerPermission(PlayerEntity player, String permission)
-    { revokePlayerPermission(player.getUniqueID(), permission); }
-
-    public static void revokePlayerPermission(UUID playerId, String permission)
-    {
-        if(permission.startsWith("#"))
-        {
-            removePlayerFromGroup(playerId, permission.substring(1));
-            return;
-        }
-
-        registry.revokeUserPermission(playerId, permission);
-    }
-
-    public static void revokeGroupPermission(String groupId, String permission)
-    {
-        if(permission.startsWith("#"))
-        {
-            removeGroupFromGroup(groupId, permission.substring(1));
-            return;
-        }
-
-        registry.revokeGroupPermission(groupId, permission);
-    }
-
-    public static void removePlayerFromGroup(PlayerEntity player, String groupId)
-    { registry.revokeGroupFromUser(player.getUniqueID(), groupId); }
-
-    public static void removePlayerFromGroup(UUID playerId, String groupId)
-    { registry.revokeGroupFromUser(playerId, groupId); }
-
-    public static void removeGroupFromGroup(String groupIdBeingDeassigned, String groupIdBeingRemovedFrom)
-    { registry.revokeGroupFromGroup(groupIdBeingDeassigned, groupIdBeingRemovedFrom); }
-
-    public static List<String> getGroupNames()
-    { return registry.getGroupNames().stream().sorted().collect(Collectors.toList()); }
 
     public static List<String> getPermissionsOfGroup(String groupId)
     { return registry.getGroupPermissions(groupId); }
@@ -324,7 +270,84 @@ public final class Permissions
 
     public static List<String> getGroupsAndPermissionsOfPlayer(PlayerEntity player)
     { return getGroupsAndPermissionsOfPlayer(player.getUniqueID()); }
+    //endregion
+    //endregion
+    //region mutators
+    //region assign permissions/groups
+    public static void assignPlayerPermission(PlayerEntity player, String permission)
+    { assignPlayerPermission(player.getUniqueID(), permission); }
 
+    public static void assignPlayerPermission(UUID playerId, String permission)
+    {
+        if(permission.startsWith("#"))
+        {
+            assignPlayerGroup(playerId, permission.substring(1));
+            return;
+        }
+
+        registry.assignUserPermission(playerId, permission);
+    }
+
+    public static void assignGroupPermission(String groupId, String permission)
+    {
+        if(permission.startsWith("#"))
+        {
+            assignPermissionGroupGroup(groupId, permission.substring(1));
+            return;
+        }
+
+        registry.assignGroupPermission(groupId, permission);
+    }
+
+    public static void assignPlayerGroup(PlayerEntity player, String groupId)
+    { registry.assignGroupToUser(player.getUniqueID(), groupId); }
+
+    public static void assignPlayerGroup(UUID playerId, String groupId)
+    { registry.assignGroupToUser(playerId, groupId); }
+
+    public static void assignPermissionGroupGroup(String groupIdBeingAssignedTo, String groupIdBeingAssigned)
+    { registry.assignGroupToGroup(groupIdBeingAssignedTo, groupIdBeingAssigned); }
+    //endregion
+    //region revoke permissions/groups
+    public static void revokePlayerPermission(PlayerEntity player, String permission)
+    { revokePlayerPermission(player.getUniqueID(), permission); }
+
+    public static void revokePlayerPermission(UUID playerId, String permission)
+    {
+        if(permission.startsWith("#"))
+        {
+            removePlayerFromGroup(playerId, permission.substring(1));
+            return;
+        }
+
+        registry.revokeUserPermission(playerId, permission);
+    }
+
+    public static void revokeGroupPermission(String groupId, String permission)
+    {
+        if(permission.startsWith("#"))
+        {
+            removeGroupFromGroup(groupId, permission.substring(1));
+            return;
+        }
+
+        registry.revokeGroupPermission(groupId, permission);
+    }
+
+    public static void removePlayerFromGroup(PlayerEntity player, String groupId)
+    { registry.revokeGroupFromUser(player.getUniqueID(), groupId); }
+
+    public static void removePlayerFromGroup(UUID playerId, String groupId)
+    { registry.revokeGroupFromUser(playerId, groupId); }
+
+    public static void removeGroupFromGroup(String groupIdBeingDeassigned, String groupIdBeingRemovedFrom)
+    { registry.revokeGroupFromGroup(groupIdBeingDeassigned, groupIdBeingRemovedFrom); }
+    //endregion
+    //region clear
+    static void clear()
+    { registry.clear(); }
+    //endregion
+    //region saving/loading/initialising
     public static void savePermissions()
     {
         if(!registry.hasBeenDifferentiatedFromFiles())
@@ -352,7 +375,7 @@ public final class Permissions
             for(String perm : preset.getValue())
                 registry.assignGroupPermission(preset.getKey(), perm);
     }
-
-    static void clear()
-    { registry.clear(); }
+    //endregion
+    //endregion
+    //endregion
 }

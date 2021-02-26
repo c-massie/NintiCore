@@ -171,7 +171,7 @@ public final class PermissionsCommandHandler
     });
 
     static Supplier<List<String>> cachedSuggestionsToSuggest
-            = Suppliers.memoizeWithExpiration(Permissions::getGroupsAndSuggestedPermissions,
+            = Suppliers.memoizeWithExpiration(Permissions::getGroupNamesAndSuggestedPermissions,
                                               cacheTimeoutInSeconds,
                                               TimeUnit.SECONDS);
     //endregion
