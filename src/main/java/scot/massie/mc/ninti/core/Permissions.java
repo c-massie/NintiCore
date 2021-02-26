@@ -81,47 +81,58 @@ public final class Permissions
 
         public static List<String> getPresetNames()
         {
-            List<String> presetNames = new ArrayList<>(presets.keySet());
-            presetNames.sort(Comparator.naturalOrder());
-            return presetNames;
+            Collection<String> presetNames;
+
+            synchronized(presets)
+            { presetNames = presets.keySet(); }
+
+            List<String> result = new ArrayList<>(presetNames);
+            result.sort(Comparator.naturalOrder());
+            return result;
         }
 
         public static Collection<String> getPresetPermissions(String presetName)
         {
-            Set<String> preset = presets.getOrDefault(presetName, null);
+            Set<String> preset;
+
+            synchronized(presets)
+            { preset = presets.get(presetName); }
+
             return preset != null ? Collections.unmodifiableCollection(preset) : Collections.emptySet();
         }
 
         public static Map<String, Set<String>> getPresets()
-        { return Collections.unmodifiableMap(presets); }
+        {
+            synchronized(presets)
+            { return Collections.unmodifiableMap(new HashMap<>(presets)); }
+        }
 
         public static void addPermission(String presetName, String permission)
-        { presets.computeIfAbsent(presetName, s -> new HashSet<>()).add(permission); }
+        {
+            synchronized(presets)
+            { presets.computeIfAbsent(presetName, s -> new HashSet<>()).add(permission); }
+        }
 
         public static void addPermissions(String presetName, String... permissions)
-        { Collections.addAll(presets.computeIfAbsent(presetName, s -> new HashSet<>()), permissions); }
+        {
+            synchronized(presets)
+            { Collections.addAll(presets.computeIfAbsent(presetName, s -> new HashSet<>()), permissions); }
+        }
 
         public static void addPermissions(String presetName, Collection<String> permissions)
-        { presets.computeIfAbsent(presetName, s -> new HashSet<>()).addAll(permissions); }
+        {
+            synchronized(presets)
+            { presets.computeIfAbsent(presetName, s -> new HashSet<>()).addAll(permissions); }
+        }
 
         public static void assignToPlayer(String presetName, UUID playerId)
-        {
-            Set<String> presetPerms = presets.get(presetName);
-
-            for(String perm : presetPerms)
-                assignPlayerPermission(playerId, perm);
-        }
+        { Permissions.assignPlayerPreset(playerId, presetName); }
 
         public static void assignToPlayer(String presetName, PlayerEntity player)
         { assignToPlayer(presetName, player.getUniqueID()); }
 
         public static void assignToGroup(String presetName, String groupName)
-        {
-            Set<String> presetPerms = presets.get(presetName);
-
-            for(String perm : presetPerms)
-                assignGroupPermission(groupName, perm);
-        }
+        { Permissions.assignGroupPreset(groupName, presetName); }
     }
 
     public static final class Suggestions
@@ -140,8 +151,10 @@ public final class Permissions
         // not public for now, until I decide whether to pass arguments to pass into the event args.
         static List<String> get()
         {
-            PermissionsAreBeingSuggestedEventArgs eventArgs
-                    = new PermissionsAreBeingSuggestedEventArgs(permissionsToBeSuggested);
+            PermissionsAreBeingSuggestedEventArgs eventArgs;
+
+            synchronized(permissionsToBeSuggested)
+            { eventArgs = new PermissionsAreBeingSuggestedEventArgs(permissionsToBeSuggested); }
 
             beingSuggested.invoke(eventArgs);
 
@@ -151,13 +164,22 @@ public final class Permissions
         }
 
         public static void add(String permission)
-        { permissionsToBeSuggested.add(permission); }
+        {
+            synchronized(permissionsToBeSuggested)
+            { permissionsToBeSuggested.add(permission); }
+        }
 
         public static void add(String... permissions)
-        { Collections.addAll(permissionsToBeSuggested, permissions); }
+        {
+            synchronized(permissionsToBeSuggested)
+            { Collections.addAll(permissionsToBeSuggested, permissions); }
+        }
 
         public static void add(Collection<String> permissions)
-        { permissionsToBeSuggested.addAll(permissions); }
+        {
+            synchronized(permissionsToBeSuggested)
+            { permissionsToBeSuggested.addAll(permissions); }
+        }
     }
     //endregion
     //endregion
@@ -189,7 +211,8 @@ public final class Permissions
         if(permission.startsWith("#"))
             return playerIsInGroup(playerId, permission.substring(1));
 
-        return registry.userHasPermission(playerId, permission);
+        synchronized(registry)
+        { return registry.userHasPermission(playerId, permission); }
     }
 
     public static boolean playerHasPermission(PlayerEntity player, String permission)
@@ -200,28 +223,46 @@ public final class Permissions
         if(permission.startsWith("#"))
             return groupIsInGroup(groupId, permission.substring(1));
 
-        return registry.groupHasPermission(groupId, permission);
+        synchronized(registry)
+        { return registry.groupHasPermission(groupId, permission); }
     }
     //endregion
     //region isInGroup
     public static boolean playerIsInGroup(UUID playerId, String groupId)
-    { return registry.userHasGroup(playerId, groupId); }
+    {
+        synchronized(registry)
+        { return registry.userHasGroup(playerId, groupId); }
+    }
 
     public static boolean playerIsInGroup(PlayerEntity player, String groupId)
-    { return registry.userHasGroup(player.getUniqueID(), groupId); }
+    {
+        synchronized(registry)
+        { return registry.userHasGroup(player.getUniqueID(), groupId); }
+    }
 
     public static boolean groupIsInGroup(String groupId, String superGroupId)
-    { return registry.groupExtendsFromGroup(groupId, superGroupId); }
+    {
+        synchronized(registry)
+        { return registry.groupExtendsFromGroup(groupId, superGroupId); }
+    }
     //endregion
     //region getters
     public static List<String> getGroupNames()
-    { return registry.getGroupNames().stream().sorted().collect(Collectors.toList()); }
+    {
+        List<String> result;
+
+        synchronized(registry)
+        { result = new ArrayList<>(registry.getGroupNames()); }
+
+        result.sort(Comparator.naturalOrder());
+        return result;
+    }
 
     static List<String> getGroupNamesAndSuggestedPermissions()
     {
         List<String> result = new ArrayList<>();
 
-        for(String groupName : registry.getGroupNames())
+        for(String groupName : getGroupNames())
             result.add("#" + groupName);
 
         result.addAll(Suggestions.get());
@@ -229,42 +270,80 @@ public final class Permissions
     }
 
     public static List<String> getPermissionsOfGroup(String groupId)
-    { return registry.getGroupPermissions(groupId); }
+    {
+        synchronized(registry)
+        { return registry.getGroupPermissions(groupId); }
+    }
 
     public static List<String> getPermissionsOfPlayer(UUID playerId)
-    { return registry.getUserPermissions(playerId); }
+    {
+        synchronized(registry)
+        { return registry.getUserPermissions(playerId); }
+    }
 
     public static List<String> getPermissionsOfPlayer(PlayerEntity player)
-    { return registry.getUserPermissions(player.getUniqueID()); }
+    {
+        synchronized(registry)
+        { return registry.getUserPermissions(player.getUniqueID()); }
+    }
 
     public static List<String> getGroupsOfGroup(String groupId)
-    { return registry.getGroupsOfGroup(groupId); }
+    {
+        synchronized(registry)
+        { return registry.getGroupsOfGroup(groupId); }
+    }
 
     public static List<String> getGroupsOfPlayer(UUID playerId)
-    { return registry.getGroupsOfUser(playerId); }
+    {
+        synchronized(registry)
+        { return registry.getGroupsOfUser(playerId); }
+    }
 
     public static List<String> getGroupsOfPlayer(PlayerEntity player)
-    { return registry.getGroupsOfUser(player.getUniqueID()); }
+    {
+        synchronized(registry)
+        { return registry.getGroupsOfUser(player.getUniqueID()); }
+    }
 
     public static List<String> getGroupsAndPermissionsOfGroup(String groupId)
     {
         List<String> result = new ArrayList<>();
+        List<String> inheritedGroups;
+        List<String> perms;
 
-        for(String groupName : registry.getGroupsOfGroup(groupId))
+        synchronized(registry)
+        {
+            inheritedGroups = new ArrayList<>(registry.getGroupsOfGroup(groupId));
+            perms = registry.getGroupPermissions(groupId);
+        }
+
+        inheritedGroups.sort(Comparator.naturalOrder());
+
+        for(String groupName : inheritedGroups)
             result.add("#" + groupName);
 
-        result.addAll(registry.getGroupPermissions(groupId));
+        result.addAll(perms);
         return result;
     }
 
     public static List<String> getGroupsAndPermissionsOfPlayer(UUID playerId)
     {
         List<String> result = new ArrayList<>();
+        List<String> inheritedGroups;
+        List<String> perms;
 
-        for(String groupName : registry.getGroupsOfUser(playerId))
+        synchronized(registry)
+        {
+            inheritedGroups = new ArrayList<>(registry.getGroupsOfUser(playerId));
+            perms = registry.getUserPermissions(playerId);
+        }
+
+        inheritedGroups.sort(Comparator.naturalOrder());
+
+        for(String groupName : inheritedGroups)
             result.add("#" + groupName);
 
-        result.addAll(registry.getUserPermissions(playerId));
+        result.addAll(perms);
         return result;
     }
 
@@ -290,7 +369,8 @@ public final class Permissions
             return;
         }
 
-        registry.assignUserPermission(playerId, permission);
+        synchronized(registry)
+        { registry.assignUserPermission(playerId, permission); }
     }
 
     public static void assignGroupPermission(String groupId, String permission)
@@ -306,24 +386,37 @@ public final class Permissions
             return;
         }
 
-        registry.assignGroupPermission(groupId, permission);
+        synchronized(registry)
+        { registry.assignGroupPermission(groupId, permission); }
     }
 
     public static void assignPlayerGroup(PlayerEntity player, String groupId)
-    { registry.assignGroupToUser(player.getUniqueID(), groupId); }
+    {
+        synchronized(registry)
+        { registry.assignGroupToUser(player.getUniqueID(), groupId); }
+    }
 
     public static void assignPlayerGroup(UUID playerId, String groupId)
-    { registry.assignGroupToUser(playerId, groupId); }
+    {
+        synchronized(registry)
+        { registry.assignGroupToUser(playerId, groupId); }
+    }
 
     public static void assignPermissionGroupGroup(String groupIdBeingAssignedTo, String groupIdBeingAssigned)
-    { registry.assignGroupToGroup(groupIdBeingAssignedTo, groupIdBeingAssigned); }
+    {
+        synchronized(registry)
+        { registry.assignGroupToGroup(groupIdBeingAssignedTo, groupIdBeingAssigned); }
+    }
 
     public static void assignPlayerPreset(UUID playerId, String presetName)
     {
         Collection<String> perms = Presets.getPresetPermissions(presetName);
 
-        for(String perm : Presets.getPresetPermissions(presetName))
-            registry.assignUserPermission(playerId, perm);
+        synchronized(registry)
+        {
+            for(String perm : perms)
+                registry.assignUserPermission(playerId, perm);
+        }
     }
 
     public static void assignPlayerPreset(PlayerEntity player, String presetName)
@@ -333,8 +426,11 @@ public final class Permissions
     {
         Collection<String> perms = Presets.getPresetPermissions(presetName);
 
-        for(String perm : Presets.getPresetPermissions(presetName))
-            registry.assignGroupPermission(groupId, presetName);
+        synchronized(registry)
+        {
+            for(String perm : perms)
+                registry.assignGroupPermission(groupId, presetName);
+        }
     }
     //endregion
     //region revoke permissions/groups
@@ -349,7 +445,8 @@ public final class Permissions
             return;
         }
 
-        registry.revokeUserPermission(playerId, permission);
+        synchronized(registry)
+        { registry.revokeUserPermission(playerId, permission); }
     }
 
     public static void revokeGroupPermission(String groupId, String permission)
@@ -360,49 +457,73 @@ public final class Permissions
             return;
         }
 
-        registry.revokeGroupPermission(groupId, permission);
+        synchronized(registry)
+        { registry.revokeGroupPermission(groupId, permission); }
     }
 
     public static void removePlayerFromGroup(PlayerEntity player, String groupId)
-    { registry.revokeGroupFromUser(player.getUniqueID(), groupId); }
+    {
+        synchronized(registry)
+        { registry.revokeGroupFromUser(player.getUniqueID(), groupId); }
+    }
 
     public static void removePlayerFromGroup(UUID playerId, String groupId)
-    { registry.revokeGroupFromUser(playerId, groupId); }
+    {
+        synchronized(registry)
+        { registry.revokeGroupFromUser(playerId, groupId); }
+    }
 
     public static void removeGroupFromGroup(String groupIdBeingDeassigned, String groupIdBeingRemovedFrom)
-    { registry.revokeGroupFromGroup(groupIdBeingDeassigned, groupIdBeingRemovedFrom); }
+    {
+        synchronized(registry)
+        { registry.revokeGroupFromGroup(groupIdBeingDeassigned, groupIdBeingRemovedFrom); }
+    }
     //endregion
     //region clear
     static void clear()
-    { registry.clear(); }
+    {
+        synchronized(registry)
+        { registry.clear(); }
+    }
     //endregion
     //region saving/loading/initialising
     public static void savePermissions()
     {
-        if(!registry.hasBeenDifferentiatedFromFiles())
-            return;
+        synchronized(registry)
+        {
+            if(!registry.hasBeenDifferentiatedFromFiles())
+                return;
 
-        try
-        { registry.save(); }
-        catch(IOException e)
-        { throw new RuntimeException("Error saving permissions files.", e); }
+            try
+            { registry.save(); }
+            catch(IOException e)
+            { throw new RuntimeException("Error saving permissions files.", e); }
+        }
     }
 
     public static void loadPermissions()
     {
         try
-        { registry.load(); }
+        {
+            synchronized(registry)
+            { registry.load(); }
+        }
         catch(IOException e)
         { throw new RuntimeException("Error loading permissions files.", e); }
     }
 
     static void initialisePermissionsWithPresets()
     {
-        registry.clear();
+        Set<Map.Entry<String, Set<String>>> presets = Presets.getPresets().entrySet();
 
-        for(Map.Entry<String, Set<String>> preset : Presets.getPresets().entrySet())
-            for(String perm : preset.getValue())
-                registry.assignGroupPermission(preset.getKey(), perm);
+        synchronized(registry)
+        {
+            registry.clear();
+
+            for(Map.Entry<String, Set<String>> preset : presets)
+                for(String perm : preset.getValue())
+                    registry.assignGroupPermission(preset.getKey(), perm);
+        }
     }
     //endregion
     //endregion
