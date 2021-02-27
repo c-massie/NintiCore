@@ -37,6 +37,12 @@ public class NintiCore
 
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
+    }
+
+    private void setup(final FMLCommonSetupEvent event)
+    {
+        // some preinit code
+        Permissions.load();
 
         Permissions.Presets.addPermission(Permissions.Presets.ADMIN,  PERMISSION_ROOT);
         Permissions.Presets.addPermission(Permissions.Presets.MOD,    PERMISSION_READ);
@@ -50,16 +56,11 @@ public class NintiCore
                                     PERMISSION_FILEHANDLING_LOAD);
     }
 
-    private void setup(final FMLCommonSetupEvent event)
-    {
-        // some preinit code
-        Permissions.load();
-    }
-
     // You can use SubscribeEvent and let the Event Bus discover methods to call
     @SubscribeEvent
     public void onServerStarting(FMLServerStartingEvent event)
     {
+        minecraftServer = event.getServer();
         // do something when the server starts
     }
 

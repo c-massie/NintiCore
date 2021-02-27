@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public final class Permissions
 {
@@ -372,12 +371,24 @@ public final class Permissions
         if(permission.startsWith("#"))
             return playerIsInGroup(playerId, permission.substring(1));
 
+        if(StaticUtilFunctions.playerIsOp(playerId))
+            return true;
+
         synchronized(registry)
         { return registry.userHasPermission(playerId, permission); }
     }
 
     public static boolean playerHasPermission(PlayerEntity player, String permission)
-    { return playerHasPermission(player.getUniqueID(), permission); }
+    {
+        if(permission.startsWith("#"))
+            return playerIsInGroup(player, permission.substring(1));
+
+        if(StaticUtilFunctions.playerIsOp(player))
+            return true;
+
+        synchronized(registry)
+        { return registry.userHasPermission(player.getUniqueID(), permission); }
+    }
 
     public static boolean groupHasPermission(String groupId, String permission)
     {
