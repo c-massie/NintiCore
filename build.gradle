@@ -136,6 +136,8 @@ jar {
         ])
     }
 
+    from sourceSets.main.allSource
+
     from {
         configurations.locallibs.collect {
             it.isDirectory() ? it : zipTree(it)
