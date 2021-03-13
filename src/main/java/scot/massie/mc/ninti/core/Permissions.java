@@ -1,5 +1,6 @@
 package scot.massie.mc.ninti.core;
 
+import com.mojang.authlib.GameProfile;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraftforge.common.UsernameCache;
 import scot.massie.lib.events.Event;
@@ -644,18 +645,77 @@ public final class Permissions
      *
      * <p>Checking whether a group has a given permission does not check the default permissions if no relevant
      * permissions have been assigned to it or any groups assigned to it.</p>
-     * @param groupId The name of the group to check.
+     * @param groupName The name of the group to check.
      * @param permission The permission to check if the group has.
      * @return True if the group has the given permission. Otherwise, false.
      * @see PermissionsRegistry#groupHasPermission(String, String)
      */
-    public static boolean groupHasPermission(String groupId, String permission)
+    public static boolean groupHasPermission(String groupName, String permission)
     {
         if(permission.startsWith("#"))
-            return groupIsInGroup(groupId, permission.substring(1));
+            return groupIsInGroup(groupName, permission.substring(1));
 
         synchronized(registry)
-        { return registry.groupHasPermission(groupId, permission); }
+        { return registry.groupHasPermission(groupName, permission); }
+    }
+    //endregion
+
+    //region getPermissionArgs
+
+    /**
+     * Gets the permission argument associated with the given player's permission.
+     * @param playerId The ID of the player to get the argument of.
+     * @param permission The permission to get the argument of.
+     * @return The argument associated with the given permission of the given player. Null if the player doesn't have
+     *         the given permission, or if the player has no argument associated with the given permission.
+     * @see PermissionsRegistry#getUserPermissionArg(Comparable, String)
+     */
+    public static String getPlayerPermissionArg(UUID playerId, String permission)
+    {
+        synchronized(registry)
+        { return registry.getUserPermissionArg(playerId, permission); }
+    }
+
+    /**
+     * Gets the permission argument associated with the given player's permission.
+     * @param player The player to get the argument of.
+     * @param permission The permission to get the argument of.
+     * @return The argument associated with the given permission of the given player. Null if the player doesn't have
+     *         the given permission, or if the player has no argument associated with the given permission.
+     * @see PermissionsRegistry#getUserPermissionArg(Comparable, String)
+     */
+    public static String getPlayerPermissionArg(PlayerEntity player, String permission)
+    {
+        synchronized(registry)
+        { return registry.getUserPermissionArg(player.getUniqueID(), permission); }
+    }
+
+    /**
+     * Gets the permission argument associated with the given player's permission.
+     * @param playerProfile The player to get the argument of.
+     * @param permission The permission to get the argument of.
+     * @return The argument associated with the given permission of the given player. Null if the player doesn't have
+     *         the given permission, or if the player has no argument associated with the given permission.
+     * @see PermissionsRegistry#getUserPermissionArg(Comparable, String)
+     */
+    public static String getPlayerPermissionArg(GameProfile playerProfile, String permission)
+    {
+        synchronized(registry)
+        { return registry.getUserPermissionArg(playerProfile.getId(), permission); }
+    }
+
+    /**
+     * Gets the permission argument associated with the given group's permission.
+     * @param groupName The name of the group to get the argument of.
+     * @param permission The permission to get the argument of.
+     * @return The argument associated with the given permission of the given group. Null if the group doesn't have the
+     *         given permission, or if the group has no argument associated with the given permission.
+     * @see PermissionsRegistry#getGroupPermissionArg(String, String)
+     */
+    public static String getGroupPermissionArg(String groupName, String permission)
+    {
+        synchronized(registry)
+        { return registry.getGroupPermissionArg(groupName, permission); }
     }
     //endregion
 
@@ -694,19 +754,35 @@ public final class Permissions
     }
 
     /**
+     * <p>Gets whether or not a player is in a group.</p>
+     *
+     * <p>If any groups assigned to the given player are, themselves, assigned to a group, the player will be considered
+     * to be in that group as well.</p>
+     * @param playerProfile The player to check.
+     * @param groupId The name of the group.
+     * @return True if the player is in the group, either directly or indirectly. Otherwise, false.
+     * @see PermissionsRegistry#userHasGroup(Comparable, String)
+     */
+    public static boolean playerIsInGroup(GameProfile playerProfile, String groupId)
+    {
+        synchronized(registry)
+        { return registry.userHasGroup(playerProfile.getId(), groupId); }
+    }
+
+    /**
      * <p>Gets whether or not a group is in another group.</p>
      *
      * <p>If any groups assigned to the given group have groups assigned to them themselves, the group being checked
      * will be considered to be in those groups as well.</p>
-     * @param groupId The name of the group to check.
+     * @param groupName The name of the group to check.
      * @param superGroupId The name of the group to check if the other group is in.
      * @return True if the first group is in the second group. Otherwise, false.
      * @see PermissionsRegistry#groupExtendsFromGroup(String, String)
      */
-    public static boolean groupIsInGroup(String groupId, String superGroupId)
+    public static boolean groupIsInGroup(String groupName, String superGroupId)
     {
         synchronized(registry)
-        { return registry.groupExtendsFromGroup(groupId, superGroupId); }
+        { return registry.groupExtendsFromGroup(groupName, superGroupId); }
     }
     //endregion
 
@@ -748,15 +824,15 @@ public final class Permissions
 
     /**
      * Gets a list of all the permissions assigned to a group. Does not include assigned groups.
-     * @param groupId The group to get the permissions of.
+     * @param groupName The name of the group to get the permissions of.
      * @return A list of all permissions assigned directly to the specified group. If the group has none or if the group
      *         does not currently exist in the permissions registry, returns an empty list.
      * @see PermissionsRegistry#getGroupPermissions(String)
      */
-    public static List<String> getPermissionsOfGroup(String groupId)
+    public static List<String> getPermissionsOfGroup(String groupName)
     {
         synchronized(registry)
-        { return registry.getGroupPermissions(groupId); }
+        { return registry.getGroupPermissions(groupName); }
     }
 
     /**
@@ -786,16 +862,29 @@ public final class Permissions
     }
 
     /**
+     * Gets a list of all the permissions assigned to a player. Does not include assigned groups.
+     * @param playerProfile The player to get the permissions of.
+     * @return A list of all permissions assigned directly to the specified player. If the player has none or if the
+     *         player does not currently exist in the permissions registry, returns an empty list.
+     * @see PermissionsRegistry#getUserPermissions(Comparable)
+     */
+    public static List<String> getPermissionsOfPlayer(GameProfile playerProfile)
+    {
+        synchronized(registry)
+        { return registry.getUserPermissions(playerProfile.getId()); }
+    }
+
+    /**
      * Gets a list of the names of all groups assigned to the given group. Does not include the groups assigned to those
      * groups.
-     * @param groupId The name of the group to get groups of.
+     * @param groupName The name of the group to get the groups of.
      * @return A list of all groups assigned directly to the group of the given name.
      * @see PermissionsRegistry#getGroupsOfGroup(String)
      */
-    public static List<String> getGroupsOfGroup(String groupId)
+    public static List<String> getGroupsOfGroup(String groupName)
     {
         synchronized(registry)
-        { return registry.getGroupsOfGroup(groupId); }
+        { return registry.getGroupsOfGroup(groupName); }
     }
 
     /**
@@ -825,16 +914,29 @@ public final class Permissions
     }
 
     /**
+     * Gets a list of the names of all groups assigned to the given player. Does not include the groups assigned to
+     * those groups.
+     * @param playerProfile The player to get groups of.
+     * @return A list of all groups assigned directly to the player.
+     * @see PermissionsRegistry#getGroupsOfUser(Comparable)
+     */
+    public static List<String> getGroupsOfPlayer(GameProfile playerProfile)
+    {
+        synchronized(registry)
+        { return registry.getGroupsOfUser(playerProfile.getId()); }
+    }
+
+    /**
      * Gets a list of the names of all groups assigned to the specified group, prefixed with "#", and all the
      * permissions assigned to the specified group. Does not include groups assigned to, or permissions of, groups
      * assigned to the specified group.
-     * @param groupId The name of the group to get the group names and permissions of.
+     * @param groupName The name of the group to get the group names and permissions of.
      * @return A list containing the names of all groups assigned directly to the specified group, prefixed with "#",
      *         and all permissions assigned directly to the specified group.
      * @see PermissionsRegistry#getGroupsOfGroup(String)
      * @see PermissionsRegistry#getGroupPermissions(String)
      */
-    public static List<String> getGroupsAndPermissionsOfGroup(String groupId)
+    public static List<String> getGroupsAndPermissionsOfGroup(String groupName)
     {
         List<String> result = new ArrayList<>();
         List<String> inheritedGroups;
@@ -842,14 +944,14 @@ public final class Permissions
 
         synchronized(registry)
         {
-            inheritedGroups = new ArrayList<>(registry.getGroupsOfGroup(groupId));
-            perms = registry.getGroupPermissions(groupId);
+            inheritedGroups = new ArrayList<>(registry.getGroupsOfGroup(groupName));
+            perms = registry.getGroupPermissions(groupName);
         }
 
         inheritedGroups.sort(Comparator.naturalOrder());
 
-        for(String groupName : inheritedGroups)
-            result.add("#" + groupName);
+        for(String inheritedGroupName : inheritedGroups)
+            result.add("#" + inheritedGroupName);
 
         result.addAll(perms);
         return result;
@@ -890,7 +992,7 @@ public final class Permissions
      * Gets a list of the names of all groups assigned to the given player, prefixed with "#", and all the permissions
      * assigned to the specified player. Does not include groups assigned to, or permissions of, groups assigned to the
      * player.
-     * @param player The plaer to get the group names and permissions of.
+     * @param player The player to get the group names and permissions of.
      * @return A list containing the names of all groups assigned directly to the given player, prefixed with "#", and
      *         all permissions assigned directly to the given player.
      * @see PermissionsRegistry#getGroupsOfUser(Comparable)
@@ -898,6 +1000,19 @@ public final class Permissions
      */
     public static List<String> getGroupsAndPermissionsOfPlayer(PlayerEntity player)
     { return getGroupsAndPermissionsOfPlayer(player.getUniqueID()); }
+
+    /**
+     * Gets a list of the names of all groups assigned to the given player, prefixed with "#", and all the permissions
+     * assigned to the specified player. Does not include groups assigned to, or permissions of, groups assigned to the
+     * player.
+     * @param playerProfile The player to get the group names and permissions of.
+     * @return A list containing the names of all groups assigned directly to the given player, prefixed with "#", and
+     *         all permissions assigned directly to the given player.
+     * @see PermissionsRegistry#getGroupsOfUser(Comparable)
+     * @see PermissionsRegistry#getUserPermissions(Comparable)
+     */
+    public static List<String> getGroupsAndPermissionsOfPlayer(GameProfile playerProfile)
+    { return getGroupsAndPermissionsOfPlayer(playerProfile.getId()); }
     //endregion
     //endregion
 
