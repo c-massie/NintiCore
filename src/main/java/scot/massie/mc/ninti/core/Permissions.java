@@ -590,10 +590,16 @@ public final class Permissions
     static final int uuidStringLength = 36;
 
     private static final PermissionsRegistry<UUID> registry = new PermissionsRegistry<>(
-            uuid -> (UsernameCache.containsUUID(uuid))
-                            ? (uuid.toString() + " - " + UsernameCache.getLastKnownUsername(uuid))
-                            : (uuid.toString()),
-            name -> UUID.fromString(name.substring(0, uuidStringLength)),
+            uuid ->
+            {
+                String username = UsernameCache.getLastKnownUsername(uuid);
+
+                if(username == null)
+                    username = "???";
+
+                return username + " - " + uuid.toString();
+            },
+            name -> UUID.fromString(name.substring(name.length() - uuidStringLength)),
             Paths.get("permissions.txt"),
             Paths.get("permission_groups.txt"));
     //endregion
