@@ -111,6 +111,7 @@ public final class PermissionsCommandHandler
 
     private static final int cacheTimeoutInSeconds = 15;
     private static final String dontHavePermission = "You don't have permission to do that.";
+    private static final String noSuggestionsSuggestion = "(No suggestions)";
 
     //region Suggestion provider caches
     static LoadingCache<UUID, List<String>> cachedSuggestionsToAddToPlayers
@@ -122,14 +123,17 @@ public final class PermissionsCommandHandler
         @Override @ParametersAreNonnullByDefault
         public List<String> load(UUID key)
         {
-            return Stream.concat(Permissions.getGroupNames()
-                                            .stream()
-                                            .filter(x -> !Permissions.playerIsInGroup(key, x))
-                                            .map(x -> "#" + x),
-                                 Permissions.Suggestions.get()
-                                            .stream()
-                                            .filter(x -> !Permissions.playerHasPermission(key, x)))
-                         .collect(Collectors.toList());
+            List<String> suggestions = new ArrayList<>();
+
+            for(String groupName : Permissions.getGroupNames())
+                if(!Permissions.playerIsInGroup(key, groupName))
+                    suggestions.add("#" + groupName);
+
+            for(String suggestion : Permissions.Suggestions.get())
+                if(!Permissions.playerHasPermission(key, suggestion))
+                    suggestions.add(suggestion);
+
+            return suggestions;
         }
     });
 
@@ -211,13 +215,24 @@ public final class PermissionsCommandHandler
             = (context, builder) ->
     {
         if(!cachedHasReadPermissions.getUnchecked(context))
-            return builder.buildFuture();
+            return builder.suggest(noSuggestionsSuggestion).buildFuture();
+
+        boolean anySuggestions = false;
 
         for(String groupName : Permissions.getGroupNames())
+        {
             builder.suggest("#" + groupName);
+            anySuggestions = true;
+        }
 
         for(String userName : UsernameCache.getMap().values())
+        {
+            anySuggestions = true;
             builder.suggest(userName);
+        }
+
+        if(!anySuggestions)
+            builder.suggest(noSuggestionsSuggestion);
 
         return builder.buildFuture();
     };
@@ -226,21 +241,32 @@ public final class PermissionsCommandHandler
             = (context, builder) ->
     {
         if(!cachedHasReadPermissions.getUnchecked(context))
-            return builder.buildFuture();
+            return builder.suggest(noSuggestionsSuggestion).buildFuture();
 
         TargetReferenced targ = new TargetReferenced(StringArgumentType.getString(context, "target"));
+        boolean anySuggestions = false;
+
         if(targ.isForGroup())
         {
             for(String suggestion : cachedSuggestionsToAddToGroups.getUnchecked(targ.getGroupName()))
                 if(suggestion.startsWith(builder.getRemaining()))
+                {
+                    anySuggestions = true;
                     builder.suggest(suggestion);
+                }
         }
         else if(targ.hasPlayerId())
         {
             for(String suggestion : cachedSuggestionsToAddToPlayers.getUnchecked(targ.getPlayerId()))
                 if(suggestion.startsWith(builder.getRemaining()))
+                {
+                    anySuggestions = true;
                     builder.suggest(suggestion);
+                }
         }
+
+        if(!anySuggestions)
+            builder.suggest(noSuggestionsSuggestion);
 
         return builder.buildFuture();
     };
@@ -249,22 +275,32 @@ public final class PermissionsCommandHandler
             = (context, builder) ->
     {
         if(!cachedHasReadPermissions.getUnchecked(context))
-            return builder.buildFuture();
+            return builder.suggest(noSuggestionsSuggestion).buildFuture();
 
         TargetReferenced targ = new TargetReferenced(StringArgumentType.getString(context, "target"));
+        boolean anySuggestions = false;
 
         if(targ.isForGroup())
         {
             for(String suggestion : cachedSuggestionsToRemoveFromGroups.getUnchecked(targ.getGroupName()))
                 if(suggestion.startsWith(builder.getRemaining()))
+                {
+                    anySuggestions = true;
                     builder.suggest(suggestion);
+                }
         }
         else if(targ.hasPlayerId())
         {
             for(String suggestion : cachedSuggestionsToRemoveFromPlayers.getUnchecked(targ.getPlayerId()))
                 if(suggestion.startsWith(builder.getRemaining()))
+                {
+                    anySuggestions = true;
                     builder.suggest(suggestion);
+                }
         }
+
+        if(!anySuggestions)
+            builder.suggest(noSuggestionsSuggestion);
 
         return builder.buildFuture();
     };
@@ -273,11 +309,19 @@ public final class PermissionsCommandHandler
             = (context, builder) ->
     {
         if(!cachedHasReadPermissions.getUnchecked(context))
-            return builder.buildFuture();
+            return builder.suggest(noSuggestionsSuggestion).buildFuture();
+
+        boolean anySuggestions = false;
 
         for(String suggestion : cachedSuggestionsToSuggest.get())
             if(suggestion.startsWith(builder.getRemaining()))
+            {
+                anySuggestions = true;
                 builder.suggest(suggestion);
+            }
+
+        if(!anySuggestions)
+            builder.suggest(noSuggestionsSuggestion);
 
         return builder.buildFuture();
     };
@@ -319,6 +363,7 @@ public final class PermissionsCommandHandler
                       .then(Commands.literal("help").executes(PermissionsCommandHandler::cmdHelp))
                       .executes(PermissionsCommandHandler::cmdHelp);
     //endregion
+    
     private static boolean sourceHasPermission(CommandContext<CommandSource> commandContext, String... permissions)
     {
         Entity sourceEntity = commandContext.getSource().getEntity();
