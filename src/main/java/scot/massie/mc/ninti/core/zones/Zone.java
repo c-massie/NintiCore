@@ -336,15 +336,22 @@ public final class Zone
     public boolean contains(Entity entity)
     { return contains(entity.getPosX(), entity.getPosY(), entity.getPosZ()); }
 
-    public void addRegion(ZoneRegion region)
+    void addRegion(ZoneRegion region)
     {
         synchronized(regions)
         { regions.add(region); }
     }
 
-    public void clear()
+    void clear()
     {
         synchronized(regions)
         { regions.clear(); }
+    }
+
+    public Zone copy()
+    {
+        Zone zone = new Zone(name, worldId);
+        zone.regions.addAll(regions);
+        return zone;
     }
 }
