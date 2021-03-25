@@ -1,6 +1,9 @@
 package scot.massie.mc.ninti.core;
 
 import com.mojang.authlib.GameProfile;
+import com.mojang.brigadier.context.CommandContext;
+import net.minecraft.command.CommandSource;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraftforge.common.UsernameCache;
 import scot.massie.lib.events.Event;
@@ -644,6 +647,49 @@ public final class Permissions
 
         synchronized(registry)
         { return registry.userHasPermission(player.getUniqueID(), permission); }
+    }
+
+    /**
+     * Gets whether or not the source of a command has the given permission.
+     * @param commandContext The command context object of the command being run.
+     * @param permissions The permissions to check for.
+     * @return True if the command is being run by something that doesn't need permission (like the server console) or
+     *         if the source has all the given permissions. Otherwise, false.
+     */
+    public static boolean commandSourceHasPermission(CommandContext<CommandSource> commandContext,
+                                                     String... permissions)
+    {
+        Entity sourceEntity = commandContext.getSource().getEntity();
+
+        if(!(sourceEntity instanceof PlayerEntity))
+            return true;
+
+        PlayerEntity sourcePlayer = (PlayerEntity)sourceEntity;
+
+        if(StaticUtilFunctions.playerIsOp(sourcePlayer))
+            return true;
+
+        List<String> permissionChecks = new ArrayList<>();
+        List<String> groupChecks = new ArrayList<>();
+
+        for(String p : permissions)
+            if(p.startsWith("#"))
+                groupChecks.add(p.substring(1));
+            else
+                permissionChecks.add(p);
+
+        synchronized(registry)
+        {
+            for(String p : permissionChecks)
+                if(!registry.userHasPermission(sourcePlayer.getUniqueID(), p))
+                    return false;
+
+            for(String g : groupChecks)
+                if(!registry.userHasGroup(sourcePlayer.getUniqueID(), g))
+                    return false;
+        }
+
+        return true;
     }
 
     /**
