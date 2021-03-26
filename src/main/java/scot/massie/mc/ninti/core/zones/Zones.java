@@ -26,6 +26,23 @@ public final class Zones
     public static Zone get(String zoneName)
     { synchronized(reg) { return reg.get(zoneName); } }
 
+    public static List<Zone> getZones()
+    { synchronized(reg) { return reg.getZones(); } }
+
+    public static List<String> getZoneNames()
+    {
+        List<String> result = new ArrayList<>();
+
+        synchronized(reg)
+        {
+            for(Zone z : reg.zones.values())
+                result.add(z.getName());
+        }
+
+        result.sort(Comparator.naturalOrder());
+        return result;
+    }
+
     public static Collection<Zone> getZonesAt(int x, int y)
     { synchronized(reg) { return reg.getZonesAt(x, y); } }
 

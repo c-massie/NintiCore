@@ -1,5 +1,6 @@
 package scot.massie.mc.ninti.core.zones;
 
+import com.google.common.base.Suppliers;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -7,7 +8,12 @@ import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.minecraft.command.CommandSource;
+import net.minecraft.world.server.ServerWorld;
+import scot.massie.mc.ninti.core.StaticUtilFunctions;
 
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
 
 import static net.minecraft.command.Commands.*;
@@ -39,16 +45,29 @@ public class ZonesCommandHandler
     private ZonesCommandHandler()
     {}
 
+    private static final int cacheTimeoutInSeconds = 15;
+
+    private static final Supplier<List<String>> cachedZoneNames
+            = Suppliers.memoizeWithExpiration(Zones::getZoneNames,
+                                              cacheTimeoutInSeconds,
+                                              TimeUnit.SECONDS);
+
     private static final SuggestionProvider<CommandSource> worldIdSuggestionProvider
             = (context, builder) ->
     {
-        throw new UnsupportedOperationException("Not implemented yet.");
+        for(ServerWorld world : StaticUtilFunctions.getServer().getWorlds())
+            builder.suggest(StaticUtilFunctions.getWorldId(world));
+
+        return builder.buildFuture();
     };
 
     private static final SuggestionProvider<CommandSource> existingZoneNameSuggestionProvider
             = (context, builder) ->
     {
-        throw new UnsupportedOperationException("Not implemented yet.");
+        for(String zoneName : cachedZoneNames.get())
+            builder.suggest(zoneName);
+
+        return builder.buildFuture();
     };
 
     private static RequiredArgumentBuilder<CommandSource, String> getMutateZoneSubCommand

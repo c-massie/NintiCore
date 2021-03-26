@@ -9,13 +9,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Function;
 
 public final class ZoneRegistry
 {
     public ZoneRegistry(String filePath)
     { this.filePath = Paths.get(filePath); }
 
-    private final Map<String, Zone> zones = new HashMap<>();
+    final Map<String, Zone> zones = new HashMap<>();
     private final Path filePath;
     private boolean changedSinceLoad = false;
 
@@ -39,6 +40,28 @@ public final class ZoneRegistry
 
     public Zone get(String zoneName)
     { return zones.get(zoneName).copy(); }
+
+    public List<Zone> getZones()
+    {
+        List<Zone> result = new ArrayList<>();
+
+        for(Zone z : zones.values())
+            result.add(z.copy());
+
+        result.sort(Comparator.comparing(Zone::getName));
+        return result;
+    }
+
+    public List<String> getZoneNames()
+    {
+        List<String> result = new ArrayList<>();
+
+        for(Zone z : zones.values())
+            result.add(z.getName());
+
+        result.sort(Comparator.naturalOrder());
+        return result;
+    }
 
     public Collection<Zone> getZonesAt(int x, int y)
     {
