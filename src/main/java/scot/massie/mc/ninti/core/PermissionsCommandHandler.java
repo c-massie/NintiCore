@@ -594,7 +594,7 @@ public final class PermissionsCommandHandler
     private static int cmdHelp(CommandContext<CommandSource> commandContext)
     {
         String clickHereText = "Click here to go to the github page for this mod.";
-        String helpUrl = "https://github.com/c-massie/PermissionsSystem";
+        String helpUrl = "https://github.com/c-massie/NintiCore";
 
         Style s = Style.EMPTY.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, helpUrl));
         ITextComponent msg = new StringTextComponent(clickHereText).setStyle(s);

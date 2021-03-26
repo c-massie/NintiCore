@@ -20,8 +20,8 @@ public final class Zones
     public static void register(Zone zone)
     { synchronized(reg) { reg.register(zone); } }
 
-    public static void deregister(String zoneName)
-    { synchronized(reg) { reg.deregister(zoneName); } }
+    public static boolean deregister(String zoneName)
+    { synchronized(reg) { return reg.deregister(zoneName); } }
 
     public static boolean rename(String zoneName, String newZoneName)
     { synchronized(reg) { return reg.rename(zoneName, newZoneName); } }

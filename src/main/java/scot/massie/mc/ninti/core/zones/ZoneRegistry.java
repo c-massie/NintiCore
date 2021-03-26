@@ -32,10 +32,19 @@ public final class ZoneRegistry
         markAsChanged();
     }
 
-    public void deregister(String zoneName)
+    public boolean deregister(String zoneName)
     {
         zones.remove(zoneName);
+
         markAsChanged();
+
+        if(zones.remove(zoneName) != null)
+        {
+            markAsChanged();
+            return true;
+        }
+        else
+            return false;
     }
 
     public boolean rename(String zoneName, String newZoneName)

@@ -22,6 +22,7 @@ public final class Zone
         boolean contains(double x, double y);
         boolean contains(double x, double y, double z);
         boolean contains(Entity entity);
+        ZoneRegion negating();
     }
 
     public static class ZoneRegionCuboid implements ZoneRegion
@@ -111,6 +112,10 @@ public final class Zone
         @Override
         public boolean contains(Entity entity)
         { return contains(entity.getPosX(), entity.getPosY(), entity.getPosZ()); }
+
+        @Override
+        public ZoneRegionCuboid negating()
+        { return new ZoneRegionCuboid(minX, minY, minZ, maxX, maxY, maxZ, true); }
 
         @Override
         public String toString()
@@ -242,6 +247,10 @@ public final class Zone
         @Override
         public boolean contains(Entity entity)
         { return contains(entity.getPosX(), entity.getPosY()); }
+
+        @Override
+        public ZoneRegionRectangle negating()
+        { return new ZoneRegionRectangle(minX, minZ, maxX, maxZ, true); }
 
         @Override
         public String toString()

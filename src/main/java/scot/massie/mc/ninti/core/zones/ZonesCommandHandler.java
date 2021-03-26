@@ -13,6 +13,10 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.minecraft.command.CommandSource;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.Style;
+import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import scot.massie.mc.ninti.core.NintiCore;
@@ -390,23 +394,148 @@ public class ZonesCommandHandler
     }
 
     private static int cmdRemoveFrom_area_2d(CommandContext<CommandSource> cmdContext)
-    { throw new UnsupportedOperationException("Not implemented yet."); }
+    {
+        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_WRITE_MODIFY_REMOVEFROM))
+        {
+            sendMessage(cmdContext, dontHavePermission);
+            return 0;
+        }
+
+        String zoneName = StringArgumentType.getString(cmdContext, "zone name");
+        int fromX = IntegerArgumentType.getInteger(cmdContext, "coörd arg 1");
+        int fromZ = IntegerArgumentType.getInteger(cmdContext, "coörd arg 2");
+        int toX = IntegerArgumentType.getInteger(cmdContext, "coörd arg 3");
+        int toZ = IntegerArgumentType.getInteger(cmdContext, "coörd arg 4");
+        Zone.ZoneRegionRectangle region = new Zone.ZoneRegionRectangle(fromX, fromZ, toX, toZ).negating();
+
+        if(!Zones.addToZoneIfThere(zoneName, region))
+            sendMessage(cmdContext, "No zone found by the name " + zoneName);
+
+        return 1;
+    }
 
     private static int cmdRemoveFrom_area_3d(CommandContext<CommandSource> cmdContext)
-    { throw new UnsupportedOperationException("Not implemented yet."); }
+    {
+        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_WRITE_MODIFY_REMOVEFROM))
+        {
+            sendMessage(cmdContext, dontHavePermission);
+            return 0;
+        }
+
+        String zoneName = StringArgumentType.getString(cmdContext, "zone name");
+        int fromX = IntegerArgumentType.getInteger(cmdContext, "coörd arg 1");
+        int fromY = IntegerArgumentType.getInteger(cmdContext, "coörd arg 2");
+        int fromZ = IntegerArgumentType.getInteger(cmdContext, "coörd arg 3");
+        int toX = IntegerArgumentType.getInteger(cmdContext, "coörd arg 4");
+        int toY = IntegerArgumentType.getInteger(cmdContext, "coörd arg 5");
+        int toZ = IntegerArgumentType.getInteger(cmdContext, "coörd arg 6");
+        Zone.ZoneRegionCuboid region = new Zone.ZoneRegionCuboid(fromX, fromY, fromZ, toX, toY, toZ).negating();
+
+        if(!Zones.addToZoneIfThere(zoneName, region))
+            sendMessage(cmdContext, "No zone found by the name " + zoneName);
+
+        return 1;
+    }
 
     private static int cmdRemoveFrom_chunk_derived(CommandContext<CommandSource> cmdContext)
-    { throw new UnsupportedOperationException("Not implemented yet."); }
+    {
+        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_WRITE_MODIFY_REMOVEFROM))
+        {
+            sendMessage(cmdContext, dontHavePermission);
+            return 0;
+        }
+
+        String zoneName = StringArgumentType.getString(cmdContext, "zone name");
+        Entity sourceEntity = cmdContext.getSource().getEntity();
+
+        if(sourceEntity == null)
+        {
+            sendMessage(cmdContext, "A chunk can only be derived from you if you're an entity in the world. Please "
+                                    + "specify a chunk.");
+            return 1;
+        }
+
+        Zone existingZone = Zones.get(zoneName);
+
+        if(existingZone == null)
+        {
+            sendMessage(cmdContext, "No zone found by the name " + zoneName);
+            return 1;
+        }
+
+        String worldId = getWorldId((ServerWorld)(sourceEntity.getEntityWorld()));
+
+        if(!existingZone.getWorldId().equals(worldId))
+        {
+            sendMessage(cmdContext, "Chunk is not in the same world as the zone.");
+            return 1;
+        }
+
+        if(!Zones.addToZoneIfThere(zoneName, Zone.ZoneRegionRectangle.ofEntitysChunk(sourceEntity).negating()))
+            sendMessage(cmdContext, "No zone found by the name " + zoneName);
+
+        return 1;
+    }
 
     private static int cmdRemoveFrom_chunk_specified(CommandContext<CommandSource> cmdContext)
-    { throw new UnsupportedOperationException("Not implemented yet."); }
+    {
+        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_WRITE_MODIFY_REMOVEFROM))
+        {
+            sendMessage(cmdContext, dontHavePermission);
+            return 0;
+        }
+
+        String zoneName = StringArgumentType.getString(cmdContext, "zone name");
+        int atX = IntegerArgumentType.getInteger(cmdContext, "at X");
+        int atZ = IntegerArgumentType.getInteger(cmdContext, "at Z");
+
+        if(!Zones.addToZoneIfThere(zoneName, Zone.ZoneRegionRectangle.ofChunkAt(atX, atZ).negating()))
+            sendMessage(cmdContext, "No zone found by the name " + zoneName);
+
+        return 1;
+    }
 
     private static int cmdRename(CommandContext<CommandSource> cmdContext)
-    { throw new UnsupportedOperationException("Not implemented yet."); }
+    {
+        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_WRITE_RENAME))
+        {
+            sendMessage(cmdContext, dontHavePermission);
+            return 0;
+        }
+
+        String oldZoneName = StringArgumentType.getString(cmdContext, "zone name");
+        String newZoneName = StringArgumentType.getString(cmdContext, "new zone name");
+
+        if(!Zones.rename(oldZoneName, newZoneName))
+            sendMessage(cmdContext, "No zone found by the name " + oldZoneName);
+
+        return 1;
+    }
 
     private static int cmdDelete(CommandContext<CommandSource> cmdContext)
-    { throw new UnsupportedOperationException("Not implemented yet."); }
+    {
+        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_WRITE_DELETE))
+        {
+            sendMessage(cmdContext, dontHavePermission);
+            return 0;
+        }
+
+        String oldZoneName = StringArgumentType.getString(cmdContext, "zone name");
+
+        if(!Zones.deregister(oldZoneName))
+            sendMessage(cmdContext, "No zone found by the name " + oldZoneName);
+
+        return 1;
+    }
 
     private static int cmdHelp(CommandContext<CommandSource> cmdContext)
-    { throw new UnsupportedOperationException("Not implemented yet."); }
+    {
+        String clickHereText = "Click here to go to the github page for this mod.";
+        String helpUrl = "https://github.com/c-massie/NintiCore";
+
+        Style s = Style.EMPTY.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, helpUrl));
+        ITextComponent msg = new StringTextComponent(clickHereText).setStyle(s);
+        cmdContext.getSource().sendFeedback(msg, true);
+        return 1;
+    }
 }
