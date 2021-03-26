@@ -169,6 +169,26 @@ public final class Zone
         public ZoneRegionRectangle(int fromX, int fromZ, int toX, int toZ)
         { this(fromX, fromZ, toX, toZ, false); }
 
+        static ZoneRegionRectangle ofChunkAt(int x, int z)
+        {
+            int minX = (x - (x % 16));
+            int minZ = (z - (z % 16));
+            if(x < 0) minX -= 16;
+            if(z < 0) minZ -= 16;
+            int maxX = minX + 15;
+            int maxZ = minZ + 15;
+            return new ZoneRegionRectangle(minX, minZ, maxX, maxZ);
+        }
+
+        static ZoneRegionRectangle ofChunk(int chunkX, int chunkZ)
+        {
+            int minX = chunkX * 16;
+            int minZ = chunkZ * 16;
+            int maxX = minX + 15;
+            int maxZ = minZ + 15;
+            return new ZoneRegionRectangle(minX, minZ, maxX, maxZ);
+        }
+
         protected final int minX, minZ, maxX, maxZ;
         protected final boolean isNegating;
 
@@ -351,6 +371,13 @@ public final class Zone
     public Zone copy()
     {
         Zone zone = new Zone(name, worldId);
+        zone.regions.addAll(regions);
+        return zone;
+    }
+
+    public Zone copyWithNewName(String newName)
+    {
+        Zone zone = new Zone(newName, worldId);
         zone.regions.addAll(regions);
         return zone;
     }

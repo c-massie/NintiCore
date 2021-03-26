@@ -10,6 +10,7 @@ import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import scot.massie.mc.ninti.core.zones.ZonesCommandHandler;
 
 import static scot.massie.mc.ninti.core.StaticUtilFunctions.*;
 
@@ -88,12 +89,15 @@ public class NintiCore
 
     @SubscribeEvent
     public void registerCommands(RegisterCommandsEvent event)
-    { event.getDispatcher().register(PermissionsCommandHandler.permissionCommand); }
+    {
+        event.getDispatcher().register(PermissionsCommandHandler.permissionCommand);
+        event.getDispatcher().register(ZonesCommandHandler      .zonesCommand);
+    }
 
     @SubscribeEvent
     public void onSave(final WorldEvent.Save worldSaveEvent)
     {
-        if(!(getWorldId(worldSaveEvent).equals("minecraft:overworld")))
+        if(!(getWorldId(worldSaveEvent).equals(getDefaultWorldId())))
             return;
 
         Permissions.save();

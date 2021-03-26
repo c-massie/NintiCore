@@ -11,7 +11,9 @@ import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.minecraft.command.CommandSource;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import scot.massie.mc.ninti.core.NintiCore;
 import scot.massie.mc.ninti.core.Permissions;
@@ -191,19 +193,95 @@ public class ZonesCommandHandler
     }
 
     private static int cmdList(CommandContext<CommandSource> cmdContext)
-    { throw new UnsupportedOperationException("Not implemented yet."); }
+    {
+        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_READ))
+        {
+            sendMessage(cmdContext, dontHavePermission);
+            return 0;
+        }
+
+        sendMessage(cmdContext, "Zones: ");
+
+        for(String zn : Zones.getZoneNames())
+            sendMessage(cmdContext, " - " + zn);
+
+        return 1;
+    }
 
     private static int cmdCreate_derivedWorld(CommandContext<CommandSource> cmdContext)
-    { throw new UnsupportedOperationException("Not implemented yet."); }
+    {
+        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_WRITE_CREATE))
+        {
+            sendMessage(cmdContext, dontHavePermission);
+            return 0;
+        }
+
+        String zoneName = StringArgumentType.getString(cmdContext, "zone name");
+
+        Entity sourceEntity = cmdContext.getSource().getEntity();
+        String impliedWorldId = sourceEntity != null
+                                        ? getWorldId((ServerWorld)sourceEntity.getEntityWorld())
+                                        : getDefaultWorldId();
+
+        Zones.register(new Zone(zoneName, impliedWorldId));
+        return 1;
+    }
 
     private static int cmdCreate_specifiedWorld(CommandContext<CommandSource> cmdContext)
-    { throw new UnsupportedOperationException("Not implemented yet."); }
+    {
+        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_WRITE_CREATE))
+        {
+            sendMessage(cmdContext, dontHavePermission);
+            return 0;
+        }
+
+        String zoneName = StringArgumentType.getString(cmdContext, "zone name");
+        String worldId = StringArgumentType.getString(cmdContext, "world id");
+        Zones.register(new Zone(zoneName, worldId));
+        return 1;
+    }
 
     private static int cmdCreateFromChunk_derived(CommandContext<CommandSource> cmdContext)
-    { throw new UnsupportedOperationException("Not implemented yet."); }
+    {
+        if(!Permissions.commandSourceHasPermission(cmdContext,  NintiCore.PERMISSION_ZONES_WRITE_CREATE,
+                                                                NintiCore.PERMISSION_ZONES_WRITE_MODIFY_ADDTO))
+        {
+            sendMessage(cmdContext, dontHavePermission);
+            return 0;
+        }
+
+        String zoneName = StringArgumentType.getString(cmdContext, "zone name");
+        Entity sourceEntity = cmdContext.getSource().getEntity();
+
+        if(sourceEntity == null)
+            sendMessage(cmdContext, "A chunk can only be derived from you if you're an entity in the world. Please "
+                                    + "specify a chunk.");
+
+        String worldId = getWorldId((ServerWorld)(sourceEntity.getEntityWorld()));
+        Zone zone = new Zone(zoneName, worldId);
+        zone.addRegion(Zone.ZoneRegionRectangle.ofChunk(sourceEntity.chunkCoordX, sourceEntity.chunkCoordZ));
+        Zones.register(zone);
+        return 1;
+    }
 
     private static int cmdCreateFromChunk_specified(CommandContext<CommandSource> cmdContext)
-    { throw new UnsupportedOperationException("Not implemented yet."); }
+    {
+        if(!Permissions.commandSourceHasPermission(cmdContext,  NintiCore.PERMISSION_ZONES_WRITE_CREATE,
+                                                                NintiCore.PERMISSION_ZONES_WRITE_MODIFY_ADDTO))
+        {
+            sendMessage(cmdContext, dontHavePermission);
+            return 0;
+        }
+
+        String zoneName = StringArgumentType.getString(cmdContext, "zone name");
+        String worldId = StringArgumentType.getString(cmdContext, "world id");
+        int atX = IntegerArgumentType.getInteger(cmdContext, "at X");
+        int atZ = IntegerArgumentType.getInteger(cmdContext, "at Z");
+        Zone zone = new Zone(zoneName, worldId);
+        zone.addRegion(Zone.ZoneRegionRectangle.ofChunkAt(atX, atZ));
+        Zones.register(zone);
+        return 1;
+    }
 
     private static int cmdAddTo_area_2d(CommandContext<CommandSource> cmdContext)
     { throw new UnsupportedOperationException("Not implemented yet."); }

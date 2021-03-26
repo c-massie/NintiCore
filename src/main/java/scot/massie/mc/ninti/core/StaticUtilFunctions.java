@@ -1,11 +1,15 @@
 package scot.massie.mc.ninti.core;
 
+import com.google.common.collect.Lists;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.command.CommandSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.OpEntry;
+import net.minecraft.util.registry.SimpleRegistry;
 import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.world.Dimension;
+import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.UsernameCache;
 import net.minecraftforge.event.world.WorldEvent;
@@ -29,6 +33,26 @@ public final class StaticUtilFunctions
 
     public static String getWorldId(WorldEvent.Save worldSaveEvent)
     { return getWorldId((ServerWorld)(worldSaveEvent.getWorld())); }
+
+    public static World getDefaultWorld()
+    {
+        // Assumes the default world is minecraft:overworld - It's not currently clear how to derive the actual default
+        // world and it usually is minecraft:overworld
+
+        for(ServerWorld w : minecraftServer.getWorlds())
+            if(getWorldId(w).equals("minecraft:overworld"))
+                return w;
+
+        System.err.println("Could not provide a default server world instance.");
+        throw new RuntimeException("Could not provide a default server world instance.");
+    }
+
+    public static String getDefaultWorldId()
+    {
+        // Assumes the default world is minecraft:overworld - It's not currently clear how to derive the actual default
+        // world and it usually is minecraft:overworld
+        return "minecraft:overworld";
+    }
 
     public static void sendMessage(CommandContext<CommandSource> cmdContext, String msg)
     { cmdContext.getSource().sendFeedback(new StringTextComponent(msg), true); }

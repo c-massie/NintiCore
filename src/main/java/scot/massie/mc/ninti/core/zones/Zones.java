@@ -23,6 +23,9 @@ public final class Zones
     public static void deregister(String zoneName)
     { synchronized(reg) { reg.deregister(zoneName); } }
 
+    public static boolean rename(String zoneName, String newZoneName)
+    { synchronized(reg) { return reg.rename(zoneName, newZoneName); } }
+
     public static Zone get(String zoneName)
     { synchronized(reg) { return reg.get(zoneName); } }
 

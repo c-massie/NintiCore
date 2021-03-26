@@ -38,6 +38,17 @@ public final class ZoneRegistry
         markAsChanged();
     }
 
+    public boolean rename(String zoneName, String newZoneName)
+    {
+        Zone oldZone = zones.remove(zoneName);
+
+        if(oldZone == null)
+            return false;
+
+        zones.put(newZoneName, oldZone.copyWithNewName(newZoneName));
+        return true;
+    }
+
     public Zone get(String zoneName)
     { return zones.get(zoneName).copy(); }
 
