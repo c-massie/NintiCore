@@ -26,10 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.function.IntSupplier;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static scot.massie.mc.ninti.core.StaticUtilFunctions.getLastKnownUUIDOfPlayer;
 import static scot.massie.mc.ninti.core.StaticUtilFunctions.sendMessage;
@@ -199,8 +196,8 @@ public final class PermissionsCommandHandler
 
             PlayerEntity player = key.getSource().asPlayer();
 
-            return Permissions.playerHasPermission(player, NintiCore.PERMISSION_READ_GROUPS)
-                && Permissions.playerHasPermission(player, NintiCore.PERMISSION_READ_PLAYERS);
+            return Permissions.playerHasPermission(player, NintiCore.PERMISSION_PERMISSIONS_READ_GROUPS)
+                && Permissions.playerHasPermission(player, NintiCore.PERMISSION_PERMISSIONS_READ_PLAYERS);
         }
     });
 
@@ -380,7 +377,7 @@ public final class PermissionsCommandHandler
 
     private static int cmdSave(CommandContext<CommandSource> commandContext)
     {
-        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_FILEHANDLING_SAVE))
+        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_FILEHANDLING_SAVE))
         {
             sendMessage(commandContext, dontHavePermission);
             return 0;
@@ -392,7 +389,7 @@ public final class PermissionsCommandHandler
 
     private static int cmdLoad(CommandContext<CommandSource> commandContext)
     {
-        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_FILEHANDLING_LOAD))
+        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_FILEHANDLING_LOAD))
         {
             sendMessage(commandContext, dontHavePermission);
             return 0;
@@ -404,7 +401,7 @@ public final class PermissionsCommandHandler
 
     private static int cmdInitialiseBlank(CommandContext<CommandSource> commandContext)
     {
-        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_WRITE_GROUPS, NintiCore.PERMISSION_WRITE_PLAYERS))
+        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_WRITE_GROUPS, NintiCore.PERMISSION_PERMISSIONS_WRITE_PLAYERS))
         {
             sendMessage(commandContext, dontHavePermission);
             return 0;
@@ -416,7 +413,7 @@ public final class PermissionsCommandHandler
 
     private static int cmdInitialisePresets(CommandContext<CommandSource> commandContext)
     {
-        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_WRITE_GROUPS, NintiCore.PERMISSION_WRITE_PLAYERS))
+        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_WRITE_GROUPS, NintiCore.PERMISSION_PERMISSIONS_WRITE_PLAYERS))
         {
             sendMessage(commandContext, dontHavePermission);
             return 0;
@@ -432,7 +429,7 @@ public final class PermissionsCommandHandler
 
         if(targ.isForGroup())
         {
-            if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_READ_GROUPS))
+            if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_READ_GROUPS))
             {
                 sendMessage(commandContext, dontHavePermission);
                 return 0;
@@ -444,7 +441,7 @@ public final class PermissionsCommandHandler
             return 1;
         }
 
-        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_READ_PLAYERS))
+        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_READ_PLAYERS))
         {
             sendMessage(commandContext, dontHavePermission);
             return 0;
@@ -467,7 +464,7 @@ public final class PermissionsCommandHandler
 
     private static int cmdListGroups(CommandContext<CommandSource> commandContext)
     {
-        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_READ_GROUPS))
+        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_READ_GROUPS))
         {
             sendMessage(commandContext, dontHavePermission);
             return 0;
@@ -484,7 +481,7 @@ public final class PermissionsCommandHandler
 
         if(targ.isForGroup())
         {
-            if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_WRITE_GROUPS))
+            if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_WRITE_GROUPS))
             {
                 sendMessage(commandContext, dontHavePermission);
                 return 0;
@@ -494,7 +491,7 @@ public final class PermissionsCommandHandler
             return 1;
         }
 
-        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_WRITE_PLAYERS))
+        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_WRITE_PLAYERS))
         {
             sendMessage(commandContext, dontHavePermission);
             return 0;
@@ -517,7 +514,7 @@ public final class PermissionsCommandHandler
 
         if(targ.isForGroup())
         {
-            if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_WRITE_GROUPS))
+            if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_WRITE_GROUPS))
             {
                 sendMessage(commandContext, dontHavePermission);
                 return 0;
@@ -527,7 +524,7 @@ public final class PermissionsCommandHandler
             return 1;
         }
 
-        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_WRITE_PLAYERS))
+        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_WRITE_PLAYERS))
         {
             sendMessage(commandContext, dontHavePermission);
             return 0;
@@ -550,7 +547,7 @@ public final class PermissionsCommandHandler
 
         if(targ.isForGroup())
         {
-            if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_READ_GROUPS))
+            if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_READ_GROUPS))
             {
                 sendMessage(commandContext, dontHavePermission);
                 return 0;
@@ -564,7 +561,7 @@ public final class PermissionsCommandHandler
             return 1;
         }
 
-        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_READ_PLAYERS))
+        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_READ_PLAYERS))
         {
             sendMessage(commandContext, dontHavePermission);
             return 0;

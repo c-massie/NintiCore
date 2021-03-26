@@ -1,6 +1,9 @@
 package scot.massie.mc.ninti.core.zones;
 
 import com.google.common.base.Suppliers;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -8,10 +11,14 @@ import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.minecraft.command.CommandSource;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.world.server.ServerWorld;
+import scot.massie.mc.ninti.core.NintiCore;
+import scot.massie.mc.ninti.core.Permissions;
 import scot.massie.mc.ninti.core.StaticUtilFunctions;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
@@ -46,11 +53,23 @@ public class ZonesCommandHandler
     {}
 
     private static final int cacheTimeoutInSeconds = 15;
+    private static final String noSuggestionsSuggestion = "(No suggestions)";
 
     private static final Supplier<List<String>> cachedZoneNames
             = Suppliers.memoizeWithExpiration(Zones::getZoneNames,
                                               cacheTimeoutInSeconds,
                                               TimeUnit.SECONDS);
+
+    private static final LoadingCache<CommandContext<CommandSource>, Boolean> cachedHasReadPermissions
+            = CacheBuilder.newBuilder()
+                          .maximumSize(1000)
+                          .expireAfterWrite(cacheTimeoutInSeconds, TimeUnit.SECONDS)
+                          .build(new CacheLoader<CommandContext<CommandSource>, Boolean>()
+    {
+        @Override
+        public Boolean load(CommandContext<CommandSource> key) throws Exception
+        { return Permissions.commandSourceHasPermission(key, NintiCore.PERMISSION_ZONES_READ); }
+    });
 
     private static final SuggestionProvider<CommandSource> worldIdSuggestionProvider
             = (context, builder) ->
@@ -64,6 +83,12 @@ public class ZonesCommandHandler
     private static final SuggestionProvider<CommandSource> existingZoneNameSuggestionProvider
             = (context, builder) ->
     {
+        if(!cachedHasReadPermissions.getUnchecked(context))
+        {
+            builder.suggest(noSuggestionsSuggestion);
+            return builder.buildFuture();
+        }
+
         for(String zoneName : cachedZoneNames.get())
             builder.suggest(zoneName);
 
