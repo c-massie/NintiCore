@@ -24,6 +24,7 @@ import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
 
 import static net.minecraft.command.Commands.*;
+import static scot.massie.mc.ninti.core.StaticUtilFunctions.*;
 
 public class ZonesCommandHandler
 {
@@ -53,6 +54,7 @@ public class ZonesCommandHandler
     {}
 
     private static final int cacheTimeoutInSeconds = 15;
+    private static final String dontHavePermission = "You don't have permission to do that.";
     private static final String noSuggestionsSuggestion = "(No suggestions)";
 
     private static final Supplier<List<String>> cachedZoneNames
@@ -74,8 +76,8 @@ public class ZonesCommandHandler
     private static final SuggestionProvider<CommandSource> worldIdSuggestionProvider
             = (context, builder) ->
     {
-        for(ServerWorld world : StaticUtilFunctions.getServer().getWorlds())
-            builder.suggest(StaticUtilFunctions.getWorldId(world));
+        for(ServerWorld world : getServer().getWorlds())
+            builder.suggest(getWorldId(world));
 
         return builder.buildFuture();
     };
@@ -165,10 +167,28 @@ public class ZonesCommandHandler
                     .executes(ZonesCommandHandler::cmdHelp);
 
     private static int cmdSave(CommandContext<CommandSource> cmdContext)
-    { throw new UnsupportedOperationException("Not implemented yet."); }
+    {
+        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_FILEHANDLING_SAVE))
+        {
+            sendMessage(cmdContext, dontHavePermission);
+            return 0;
+        }
+
+        Zones.save();
+        return 1;
+    }
 
     private static int cmdLoad(CommandContext<CommandSource> cmdContext)
-    { throw new UnsupportedOperationException("Not implemented yet."); }
+    {
+        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_FILEHANDLING_LOAD))
+        {
+            sendMessage(cmdContext, dontHavePermission);
+            return 0;
+        }
+
+        Zones.load();
+        return 1;
+    }
 
     private static int cmdList(CommandContext<CommandSource> cmdContext)
     { throw new UnsupportedOperationException("Not implemented yet."); }
