@@ -49,8 +49,26 @@ public final class ZoneRegistry
         return true;
     }
 
+    public boolean addToZoneIfThere(String zoneName, Zone.ZoneRegion region)
+    {
+        Zone zone = zones.get(zoneName);
+
+        if(zone == null)
+            return false;
+
+        zone.addRegion(region);
+        return true;
+    }
+
     public Zone get(String zoneName)
-    { return zones.get(zoneName).copy(); }
+    {
+        Zone zone = zones.get(zoneName);
+
+        if(zone == null)
+            return null;
+
+        return zone.copy();
+    }
 
     public List<Zone> getZones()
     {

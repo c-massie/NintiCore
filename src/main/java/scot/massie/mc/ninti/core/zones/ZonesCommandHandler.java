@@ -19,6 +19,7 @@ import scot.massie.mc.ninti.core.NintiCore;
 import scot.massie.mc.ninti.core.Permissions;
 import scot.massie.mc.ninti.core.StaticUtilFunctions;
 
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -70,8 +71,8 @@ public class ZonesCommandHandler
                           .expireAfterWrite(cacheTimeoutInSeconds, TimeUnit.SECONDS)
                           .build(new CacheLoader<CommandContext<CommandSource>, Boolean>()
     {
-        @Override
-        public Boolean load(CommandContext<CommandSource> key) throws Exception
+        @Override @ParametersAreNonnullByDefault
+        public Boolean load(CommandContext<CommandSource> key)
         { return Permissions.commandSourceHasPermission(key, NintiCore.PERMISSION_ZONES_READ); }
     });
 
@@ -254,12 +255,15 @@ public class ZonesCommandHandler
         Entity sourceEntity = cmdContext.getSource().getEntity();
 
         if(sourceEntity == null)
+        {
             sendMessage(cmdContext, "A chunk can only be derived from you if you're an entity in the world. Please "
                                     + "specify a chunk.");
+            return 1;
+        }
 
         String worldId = getWorldId((ServerWorld)(sourceEntity.getEntityWorld()));
         Zone zone = new Zone(zoneName, worldId);
-        zone.addRegion(Zone.ZoneRegionRectangle.ofChunk(sourceEntity.chunkCoordX, sourceEntity.chunkCoordZ));
+        zone.addRegion(Zone.ZoneRegionRectangle.ofEntitysChunk(sourceEntity));
         Zones.register(zone);
         return 1;
     }
@@ -284,16 +288,106 @@ public class ZonesCommandHandler
     }
 
     private static int cmdAddTo_area_2d(CommandContext<CommandSource> cmdContext)
-    { throw new UnsupportedOperationException("Not implemented yet."); }
+    {
+        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_WRITE_MODIFY_ADDTO))
+        {
+            sendMessage(cmdContext, dontHavePermission);
+            return 0;
+        }
+
+        String zoneName = StringArgumentType.getString(cmdContext, "zone name");
+        int fromX = IntegerArgumentType.getInteger(cmdContext, "coörd arg 1");
+        int fromZ = IntegerArgumentType.getInteger(cmdContext, "coörd arg 2");
+        int toX = IntegerArgumentType.getInteger(cmdContext, "coörd arg 3");
+        int toZ = IntegerArgumentType.getInteger(cmdContext, "coörd arg 4");
+        Zone.ZoneRegionRectangle region = new Zone.ZoneRegionRectangle(fromX, fromZ, toX, toZ);
+
+        if(!Zones.addToZoneIfThere(zoneName, region))
+            sendMessage(cmdContext, "No zone found by the name " + zoneName);
+
+        return 1;
+    }
 
     private static int cmdAddTo_area_3d(CommandContext<CommandSource> cmdContext)
-    { throw new UnsupportedOperationException("Not implemented yet."); }
+    {
+        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_WRITE_MODIFY_ADDTO))
+        {
+            sendMessage(cmdContext, dontHavePermission);
+            return 0;
+        }
+
+        String zoneName = StringArgumentType.getString(cmdContext, "zone name");
+        int fromX = IntegerArgumentType.getInteger(cmdContext, "coörd arg 1");
+        int fromY = IntegerArgumentType.getInteger(cmdContext, "coörd arg 2");
+        int fromZ = IntegerArgumentType.getInteger(cmdContext, "coörd arg 3");
+        int toX = IntegerArgumentType.getInteger(cmdContext, "coörd arg 4");
+        int toY = IntegerArgumentType.getInteger(cmdContext, "coörd arg 5");
+        int toZ = IntegerArgumentType.getInteger(cmdContext, "coörd arg 6");
+        Zone.ZoneRegionCuboid region = new Zone.ZoneRegionCuboid(fromX, fromY, fromZ, toX, toY, toZ);
+
+        if(!Zones.addToZoneIfThere(zoneName, region))
+            sendMessage(cmdContext, "No zone found by the name " + zoneName);
+
+        return 1;
+    }
 
     private static int cmdAddTo_chunk_derived(CommandContext<CommandSource> cmdContext)
-    { throw new UnsupportedOperationException("Not implemented yet."); }
+    {
+        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_WRITE_MODIFY_ADDTO))
+        {
+            sendMessage(cmdContext, dontHavePermission);
+            return 0;
+        }
+
+        String zoneName = StringArgumentType.getString(cmdContext, "zone name");
+        Entity sourceEntity = cmdContext.getSource().getEntity();
+
+        if(sourceEntity == null)
+        {
+            sendMessage(cmdContext, "A chunk can only be derived from you if you're an entity in the world. Please "
+                                    + "specify a chunk.");
+            return 1;
+        }
+
+        Zone existingZone = Zones.get(zoneName);
+
+        if(existingZone == null)
+        {
+            sendMessage(cmdContext, "No zone found by the name " + zoneName);
+            return 1;
+        }
+
+        String worldId = getWorldId((ServerWorld)(sourceEntity.getEntityWorld()));
+
+        if(!existingZone.getWorldId().equals(worldId))
+        {
+            sendMessage(cmdContext, "Chunk is not in the same world as the zone.");
+            return 1;
+        }
+
+        if(!Zones.addToZoneIfThere(zoneName, Zone.ZoneRegionRectangle.ofEntitysChunk(sourceEntity)))
+            sendMessage(cmdContext, "No zone found by the name " + zoneName);
+
+        return 1;
+    }
 
     private static int cmdAddTo_chunk_specified(CommandContext<CommandSource> cmdContext)
-    { throw new UnsupportedOperationException("Not implemented yet."); }
+    {
+        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_WRITE_MODIFY_ADDTO))
+        {
+            sendMessage(cmdContext, dontHavePermission);
+            return 0;
+        }
+
+        String zoneName = StringArgumentType.getString(cmdContext, "zone name");
+        int atX = IntegerArgumentType.getInteger(cmdContext, "at X");
+        int atZ = IntegerArgumentType.getInteger(cmdContext, "at Z");
+
+        if(!Zones.addToZoneIfThere(zoneName, Zone.ZoneRegionRectangle.ofChunkAt(atX, atZ)))
+            sendMessage(cmdContext, "No zone found by the name " + zoneName);
+
+        return 1;
+    }
 
     private static int cmdRemoveFrom_area_2d(CommandContext<CommandSource> cmdContext)
     { throw new UnsupportedOperationException("Not implemented yet."); }

@@ -26,6 +26,9 @@ public final class Zones
     public static boolean rename(String zoneName, String newZoneName)
     { synchronized(reg) { return reg.rename(zoneName, newZoneName); } }
 
+    public static boolean addToZoneIfThere(String zoneName, Zone.ZoneRegion region)
+    { synchronized(reg) { return reg.addToZoneIfThere(zoneName, region); } }
+
     public static Zone get(String zoneName)
     { synchronized(reg) { return reg.get(zoneName); } }
 

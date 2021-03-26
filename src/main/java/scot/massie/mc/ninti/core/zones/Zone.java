@@ -189,6 +189,9 @@ public final class Zone
             return new ZoneRegionRectangle(minX, minZ, maxX, maxZ);
         }
 
+        static ZoneRegionRectangle ofEntitysChunk(Entity entity)
+        { return ofChunk(entity.chunkCoordX, entity.chunkCoordZ); }
+
         protected final int minX, minZ, maxX, maxZ;
         protected final boolean isNegating;
 
