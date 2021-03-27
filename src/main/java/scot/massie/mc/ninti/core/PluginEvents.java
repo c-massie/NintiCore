@@ -1,5 +1,6 @@
 package scot.massie.mc.ninti.core;
 
+import scot.massie.lib.events.InvokablePriorityEvent;
 import scot.massie.lib.events.OrderedEvent;
 import scot.massie.lib.events.PriorityEvent;
 import scot.massie.lib.events.ProtectedPriorityEvent;
@@ -20,8 +21,8 @@ public final class PluginEvents
     private PluginEvents()
     {}
 
-    static final PriorityEvent<DataLoadEventArgs> onDataLoaded_internal = new OrderedEvent<>();
-    static final PriorityEvent<DataSaveEventArgs> onDataSaved_internal = new OrderedEvent<>();
+    static final InvokablePriorityEvent<DataLoadEventArgs> onDataLoaded_internal = new OrderedEvent<>();
+    static final InvokablePriorityEvent<DataSaveEventArgs> onDataSaved_internal = new OrderedEvent<>();
 
     public static final PriorityEvent<DataLoadEventArgs> onDataLoaded
             = new ProtectedPriorityEvent<>(onDataLoaded_internal);

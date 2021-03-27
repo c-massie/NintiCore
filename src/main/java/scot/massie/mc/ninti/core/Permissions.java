@@ -7,6 +7,8 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraftforge.common.UsernameCache;
 import scot.massie.lib.events.Event;
+import scot.massie.lib.events.InvokableEvent;
+import scot.massie.lib.events.ProtectedEvent;
 import scot.massie.lib.events.SetEvent;
 import scot.massie.lib.events.args.EventArgs;
 import scot.massie.lib.permissions.PermissionsRegistry;
@@ -253,11 +255,15 @@ public final class Permissions
 
         private static final Set<String> permissionsToBeSuggested = new HashSet<>();
 
+        private static final InvokableEvent<PermissionsAreBeingSuggestedEventArgs> beingSuggested_internal
+                = new SetEvent<>();
+
         /**
          * Event for suggestions being requested. This allows you to make additional suggestions based on current
          * circumstances.
          */
-        public static final Event<PermissionsAreBeingSuggestedEventArgs> beingSuggested = new SetEvent<>();
+        public static final Event<PermissionsAreBeingSuggestedEventArgs> beingSuggested
+                = new ProtectedEvent<>(beingSuggested_internal);
 
         // not public for now, until I decide whether to pass arguments to pass into the event args.
 
@@ -272,7 +278,7 @@ public final class Permissions
             synchronized(permissionsToBeSuggested)
             { eventArgs = new PermissionsAreBeingSuggestedEventArgs(permissionsToBeSuggested); }
 
-            beingSuggested.invoke(eventArgs);
+            beingSuggested_internal.invoke(eventArgs);
 
             List<String> suggestions = new ArrayList<>(eventArgs.getSuggestedPermissions());
             suggestions.sort(Comparator.naturalOrder());
