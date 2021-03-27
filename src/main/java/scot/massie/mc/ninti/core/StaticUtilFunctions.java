@@ -14,6 +14,8 @@ import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.UsernameCache;
 import net.minecraftforge.event.world.WorldEvent;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
@@ -27,6 +29,9 @@ public final class StaticUtilFunctions
 
     public static MinecraftServer getServer()
     { return minecraftServer; }
+
+    public static Path getPluginDataFolder()
+    { return Paths.get("plugindata"); }
 
     public static String getWorldId(ServerWorld world)
     { return world.getDimensionKey().getLocation().toString(); }

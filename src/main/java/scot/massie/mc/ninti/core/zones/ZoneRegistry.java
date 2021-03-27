@@ -3,6 +3,7 @@ package scot.massie.mc.ninti.core.zones;
 import net.minecraft.entity.Entity;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.file.Files;
@@ -55,6 +56,7 @@ public final class ZoneRegistry
             return false;
 
         zones.put(newZoneName, oldZone.copyWithNewName(newZoneName));
+        markAsChanged();
         return true;
     }
 
@@ -66,6 +68,7 @@ public final class ZoneRegistry
             return false;
 
         zone.addRegion(region);
+        markAsChanged();
         return true;
     }
 
@@ -162,8 +165,10 @@ public final class ZoneRegistry
         if(!changedSinceLoad)
             return;
 
-        try
-        { writeZones(Files.newBufferedWriter(filePath)); }
+        filePath.getParent().toFile().mkdirs();
+
+        try(BufferedWriter writer = Files.newBufferedWriter(filePath))
+        { writeZones(writer); }
         catch(IOException e)
         { throw new RuntimeException("Could not save the zones file.", e); }
 
@@ -186,7 +191,7 @@ public final class ZoneRegistry
         for(Zone.ZoneRegion region : zone.getRegions())
             result += "\n    " + zoneRegionToString(region);
 
-        return result;
+        return result + "\n\n";
     }
 
     private static String zoneRegionToString(Zone.ZoneRegion region)
@@ -231,6 +236,9 @@ public final class ZoneRegistry
 
         for(String line; (line = reader.readLine()) != null;)
         {
+            if(line.trim().isEmpty())
+                continue;
+
             if(line.startsWith("    "))
             {
                 if(currentZone == null)

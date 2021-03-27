@@ -3,6 +3,7 @@ package scot.massie.mc.ninti.core;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -10,6 +11,7 @@ import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import scot.massie.mc.ninti.core.zones.Zones;
 import scot.massie.mc.ninti.core.zones.ZonesCommandHandler;
 
 import static scot.massie.mc.ninti.core.StaticUtilFunctions.*;
@@ -49,13 +51,23 @@ public class NintiCore
 
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
+
+        PluginEvents.onDataLoaded.register(args ->
+        {
+            Permissions.load();
+            Zones.load();
+        });
+
+        PluginEvents.onDataSaved.register(args ->
+        {
+            Permissions.save();
+            Zones.save();
+        });
     }
 
     private void setup(final FMLCommonSetupEvent event)
     {
         // some preinit code
-        Permissions.load();
-
         Permissions.Presets.addPermission(Permissions.Presets.ADMIN, PERMISSION_PERMISSIONS_ROOT);
         Permissions.Presets.addPermission(Permissions.Presets.ADMIN, PERMISSION_ZONES_ROOT);
         Permissions.Presets.addPermission(Permissions.Presets.MOD, PERMISSION_PERMISSIONS_READ);
@@ -80,10 +92,11 @@ public class NintiCore
     }
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onServerStarting(FMLServerStartingEvent event)
     {
         minecraftServer = event.getServer();
+        PluginEvents.onDataLoaded_internal.invoke(new PluginEvents.DataLoadEventArgs());
         // do something when the server starts
     }
 
@@ -100,7 +113,7 @@ public class NintiCore
         if(!(getWorldId(worldSaveEvent).equals(getDefaultWorldId())))
             return;
 
-        Permissions.save();
+        PluginEvents.onDataSaved_internal.invoke(new PluginEvents.DataSaveEventArgs());
     }
 
     @Mod.EventBusSubscriber(bus=Mod.EventBusSubscriber.Bus.MOD)
