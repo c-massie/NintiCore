@@ -40,6 +40,11 @@ public class ZonesCommandHandler
     zones save
     zones load
     zones list
+    zones list here
+    zones list in [world id] at [x] [z]
+    zones list in [world id] at [x] [y] [z]
+    zones list at [x] [z]
+    zones list at [x] [y] [z]
     zones create [zone name] [world id]
     zones createfromchunk [zone name]
     zones createfromchunk [zone name] [world id] [atX] [atZ]
@@ -134,6 +139,25 @@ public class ZonesCommandHandler
             = literal("zones")
                     .then(literal("save").executes(ZonesCommandHandler::cmdSave))
                     .then(literal("load").executes(ZonesCommandHandler::cmdLoad))
+                    .then(literal("list")
+                            .then(literal("here")
+                                    .executes(ZonesCommandHandler::cmdList_here))
+                            .then(literal("in")
+                                    .then(argument("world id", StringArgumentType.word())
+                                            .suggests(worldIdSuggestionProvider)
+                                            .then(literal("at")
+                                                    .then(argument("coörd arg 1", IntegerArgumentType.integer())
+                                                            .then(argument("coörd arg 2", IntegerArgumentType.integer())
+                                                                    .then(argument("coörd arg 3", IntegerArgumentType.integer())
+                                                                            .executes(ZonesCommandHandler::cmdList_inSpecifiedWorld_xyz))
+                                                                    .executes(ZonesCommandHandler::cmdList_inSpecifiedWorld_xz))))))
+                            .then(literal("at")
+                                    .then(argument("coörd arg 1", IntegerArgumentType.integer())
+                                            .then(argument("coörd arg 2", IntegerArgumentType.integer())
+                                                    .then(argument("coörd arg 3", IntegerArgumentType.integer())
+                                                         .executes(ZonesCommandHandler::cmdList_inDerivedWorld_xyz))
+                                                    .executes(ZonesCommandHandler::cmdList_inDerivedWorld_xz))))
+                            .executes(ZonesCommandHandler::cmdList))
                     .then(literal("create")
                             .then(argument("zone name", StringArgumentType.word())
                                     .then(argument("world id", StringArgumentType.word())
@@ -208,6 +232,116 @@ public class ZonesCommandHandler
         sendMessage(cmdContext, "Zones: ");
 
         for(String zn : Zones.getZoneNames())
+            sendMessage(cmdContext, " - " + zn);
+
+        return 1;
+    }
+
+    private static int cmdList_here(CommandContext<CommandSource> cmdContext)
+    {
+        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_READ))
+        {
+            sendMessage(cmdContext, dontHavePermission);
+            return 0;
+        }
+
+        Entity sourceEntity = cmdContext.getSource().getEntity();
+
+        if(sourceEntity == null)
+        {
+            sendMessage(cmdContext, "Where is \"here\"?");
+            return 1;
+        }
+
+        sendMessage(cmdContext, "Zones at your location: ");
+
+        for(String zn : Zones.getZoneNamesEntityIsIn(sourceEntity))
+            sendMessage(cmdContext, " - " + zn);
+
+        return 1;
+    }
+
+    private static int cmdList_inDerivedWorld_xz(CommandContext<CommandSource> cmdContext)
+    {
+        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_READ))
+        {
+            sendMessage(cmdContext, dontHavePermission);
+            return 0;
+        }
+
+        Entity sourceEntity = cmdContext.getSource().getEntity();
+        String worldId = sourceEntity == null ? getDefaultWorldId()
+                                              : getWorldId((ServerWorld)sourceEntity.getEntityWorld());
+        int x = IntegerArgumentType.getInteger(cmdContext, "coörd arg 1");
+        int z = IntegerArgumentType.getInteger(cmdContext, "coörd arg 2");
+
+        sendMessage(cmdContext, "Zones at " + x + ", " + z + " in " + worldId + ": ");
+
+        for(String zn : Zones.getZoneNamesAt(x, z))
+            sendMessage(cmdContext, " - " + zn);
+
+        return 1;
+    }
+
+    private static int cmdList_inDerivedWorld_xyz(CommandContext<CommandSource> cmdContext)
+    {
+        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_READ))
+        {
+            sendMessage(cmdContext, dontHavePermission);
+            return 0;
+        }
+
+        Entity sourceEntity = cmdContext.getSource().getEntity();
+        String worldId = sourceEntity == null ? getDefaultWorldId()
+                                              : getWorldId((ServerWorld)sourceEntity.getEntityWorld());
+        int x = IntegerArgumentType.getInteger(cmdContext, "coörd arg 1");
+        int y = IntegerArgumentType.getInteger(cmdContext, "coörd arg 2");
+        int z = IntegerArgumentType.getInteger(cmdContext, "coörd arg 3");
+
+        sendMessage(cmdContext, "Zones at " + x + ", " + y + ", " + z + " in " + worldId + ": ");
+
+        for(String zn : Zones.getZoneNamesAt(x, y, z))
+            sendMessage(cmdContext, " - " + zn);
+
+        return 1;
+    }
+
+    private static int cmdList_inSpecifiedWorld_xz(CommandContext<CommandSource> cmdContext)
+    {
+        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_READ))
+        {
+            sendMessage(cmdContext, dontHavePermission);
+            return 0;
+        }
+
+        String worldId = StringArgumentType.getString(cmdContext, "world id");
+        int x = IntegerArgumentType.getInteger(cmdContext, "coörd arg 1");
+        int z = IntegerArgumentType.getInteger(cmdContext, "coörd arg 2");
+
+        sendMessage(cmdContext, "Zones at " + x + ", " + z + " in " + worldId + ": ");
+
+        for(String zn : Zones.getZoneNamesAt(x, z))
+            sendMessage(cmdContext, " - " + zn);
+
+        return 1;
+    }
+
+    private static int cmdList_inSpecifiedWorld_xyz(CommandContext<CommandSource> cmdContext)
+    {
+        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_READ))
+        {
+            sendMessage(cmdContext, dontHavePermission);
+            return 0;
+        }
+
+        String worldId = StringArgumentType.getString(cmdContext, "world id");
+        int x = IntegerArgumentType.getInteger(cmdContext, "coörd arg 1");
+        int y = IntegerArgumentType.getInteger(cmdContext, "coörd arg 2");
+        int z = IntegerArgumentType.getInteger(cmdContext, "coörd arg 3");
+
+        sendMessage(cmdContext, "Zones at " + x + ", " + y + ", " + z + " in " + worldId + ": ");
+
+        for(String zn : Zones.getZoneNamesAt(x, y, z))
             sendMessage(cmdContext, " - " + zn);
 
         return 1;

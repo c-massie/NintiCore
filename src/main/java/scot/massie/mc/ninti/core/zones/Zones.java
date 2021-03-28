@@ -35,34 +35,38 @@ public final class Zones
     public static List<Zone> getZones()
     { synchronized(reg) { return reg.getZones(); } }
 
-    public static List<String> getZoneNames()
-    {
-        List<String> result = new ArrayList<>();
-
-        synchronized(reg)
-        {
-            for(Zone z : reg.zones.values())
-                result.add(z.getName());
-        }
-
-        result.sort(Comparator.naturalOrder());
-        return result;
-    }
-
-    public static Collection<Zone> getZonesAt(int x, int y)
-    { synchronized(reg) { return reg.getZonesAt(x, y); } }
+    public static Collection<Zone> getZonesAt(int x, int z)
+    { synchronized(reg) { return reg.getZonesAt(x, z); } }
 
     public static Collection<Zone> getZonesAt(int x, int y, int z)
     { synchronized(reg) { return reg.getZonesAt(x, y, z); } }
 
-    public static Collection<Zone> getZonesAt(double x, double y)
-    { synchronized(reg) { return reg.getZonesAt(x, y); } }
+    public static Collection<Zone> getZonesAt(double x, double z)
+    { synchronized(reg) { return reg.getZonesAt(x, z); } }
 
     public static Collection<Zone> getZonesAt(double x, double y, double z)
     { synchronized(reg) { return reg.getZonesAt(x, y, z); } }
 
     public static Collection<Zone> getZonesEntityIsIn(Entity entity)
     { synchronized(reg) { return reg.getZonesEntityIsIn(entity); } }
+
+    public static List<String> getZoneNames()
+    { synchronized(reg) { return reg.getZoneNames(); } }
+
+    public static List<String> getZoneNamesAt(int x, int z)
+    { synchronized(reg) { return reg.getZoneNamesAt(x, z); } }
+
+    public static List<String> getZoneNamesAt(int x, int y, int z)
+    { synchronized(reg) { return reg.getZoneNamesAt(x, y, z); } }
+
+    public static List<String> getZoneNamesAt(double x, double z)
+    { synchronized(reg) { return reg.getZoneNamesAt(x, z); } }
+
+    public static List<String> getZoneNamesAt(double x, double y, double z)
+    { synchronized(reg) { return reg.getZoneNamesAt(x, y, z); } }
+
+    public static List<String> getZoneNamesEntityIsIn(Entity entity)
+    { synchronized(reg) { return reg.getZoneNamesEntityIsIn(entity); } }
 
     public static void save()
     { synchronized(reg) { reg.save(); } }

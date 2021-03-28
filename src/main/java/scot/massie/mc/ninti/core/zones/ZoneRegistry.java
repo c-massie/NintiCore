@@ -93,23 +93,12 @@ public final class ZoneRegistry
         return result;
     }
 
-    public List<String> getZoneNames()
-    {
-        List<String> result = new ArrayList<>();
-
-        for(Zone z : zones.values())
-            result.add(z.getName());
-
-        result.sort(Comparator.naturalOrder());
-        return result;
-    }
-
-    public Collection<Zone> getZonesAt(int x, int y)
+    public Collection<Zone> getZonesAt(int x, int z)
     {
         Collection<Zone> result = new ArrayList<>();
 
         for(Zone zone : zones.values())
-            if(zone.contains(x, y))
+            if(zone.contains(x, z))
                 result.add(zone.copy());
 
         return result;
@@ -156,6 +145,77 @@ public final class ZoneRegistry
             if(zone.contains(entity))
                 result.add(zone.copy());
 
+        return result;
+    }
+
+    public List<String> getZoneNames()
+    {
+        List<String> result = new ArrayList<>();
+
+        for(Zone z : zones.values())
+            result.add(z.getName());
+
+        result.sort(Comparator.naturalOrder());
+        return result;
+    }
+
+    public List<String> getZoneNamesAt(int x, int z)
+    {
+        List<String> result = new ArrayList<>();
+
+        for(Zone zone : zones.values())
+            if(zone.contains(x, z))
+                result.add(zone.getName());
+
+        result.sort(Comparator.naturalOrder());
+        return result;
+    }
+
+    public List<String> getZoneNamesAt(int x, int y, int z)
+    {
+        List<String> result = new ArrayList<>();
+
+        for(Zone zone : zones.values())
+            if(zone.contains(x, y, z))
+                result.add(zone.getName());
+
+        result.sort(Comparator.naturalOrder());
+        return result;
+    }
+
+    public List<String> getZoneNamesAt(double x, double z)
+    {
+        List<String> result = new ArrayList<>();
+
+        for(Zone zone : zones.values())
+            if(zone.contains(x, z))
+                result.add(zone.getName());
+
+        result.sort(Comparator.naturalOrder());
+        return result;
+    }
+
+    public List<String> getZoneNamesAt(double x, double y, double z)
+    {
+        List<String> result = new ArrayList<>();
+
+        for(Zone zone : zones.values())
+            if(zone.contains(x, y, z))
+                result.add(zone.getName());
+
+        result.sort(Comparator.naturalOrder());
+        return result;
+    }
+
+    public List<String> getZoneNamesEntityIsIn(Entity entity)
+    {
+        List<String> result = new ArrayList<>();
+
+        for(Zone zone : zones.values())
+            if(zone.contains(entity))
+                result.add(zone.getName());
+
+        result.sort(Comparator.naturalOrder());
         return result;
     }
 
