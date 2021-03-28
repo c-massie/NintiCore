@@ -28,8 +28,8 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import static scot.massie.mc.ninti.core.StaticUtilFunctions.getLastKnownUUIDOfPlayer;
-import static scot.massie.mc.ninti.core.StaticUtilFunctions.sendMessage;
+import static scot.massie.mc.ninti.core.PluginUtils.getLastKnownUUIDOfPlayer;
+import static scot.massie.mc.ninti.core.PluginUtils.sendMessage;
 
 public final class PermissionsCommandHandler
 {

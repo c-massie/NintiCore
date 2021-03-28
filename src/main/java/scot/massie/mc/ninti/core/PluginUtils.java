@@ -20,9 +20,9 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
 
-public final class StaticUtilFunctions
+public final class PluginUtils
 {
-    private StaticUtilFunctions()
+    private PluginUtils()
     {}
 
     static MinecraftServer minecraftServer;

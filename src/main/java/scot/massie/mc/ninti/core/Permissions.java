@@ -629,7 +629,7 @@ public final class Permissions
         if(permission.startsWith("#"))
             return playerIsInGroup(playerId, permission.substring(1));
 
-        if(StaticUtilFunctions.playerIsOp(playerId))
+        if(PluginUtils.playerIsOp(playerId))
             return true;
 
         synchronized(registry)
@@ -648,7 +648,7 @@ public final class Permissions
         if(permission.startsWith("#"))
             return playerIsInGroup(player, permission.substring(1));
 
-        if(StaticUtilFunctions.playerIsOp(player))
+        if(PluginUtils.playerIsOp(player))
             return true;
 
         synchronized(registry)
@@ -672,7 +672,7 @@ public final class Permissions
 
         PlayerEntity sourcePlayer = (PlayerEntity)sourceEntity;
 
-        if(StaticUtilFunctions.playerIsOp(sourcePlayer))
+        if(PluginUtils.playerIsOp(sourcePlayer))
             return true;
 
         List<String> permissionChecks = new ArrayList<>();

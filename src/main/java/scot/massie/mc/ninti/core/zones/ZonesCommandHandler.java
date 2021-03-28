@@ -12,26 +12,22 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.minecraft.command.CommandSource;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.event.ClickEvent;
-import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import scot.massie.mc.ninti.core.NintiCore;
 import scot.massie.mc.ninti.core.Permissions;
-import scot.massie.mc.ninti.core.StaticUtilFunctions;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
 
 import static net.minecraft.command.Commands.*;
-import static scot.massie.mc.ninti.core.StaticUtilFunctions.*;
+import static scot.massie.mc.ninti.core.PluginUtils.*;
 
 public class ZonesCommandHandler
 {

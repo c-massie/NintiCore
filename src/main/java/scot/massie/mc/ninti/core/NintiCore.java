@@ -14,7 +14,7 @@ import org.apache.logging.log4j.Logger;
 import scot.massie.mc.ninti.core.zones.Zones;
 import scot.massie.mc.ninti.core.zones.ZonesCommandHandler;
 
-import static scot.massie.mc.ninti.core.StaticUtilFunctions.*;
+import static scot.massie.mc.ninti.core.PluginUtils.*;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod("ninticore")
