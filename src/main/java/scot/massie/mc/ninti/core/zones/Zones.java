@@ -15,7 +15,7 @@ public final class Zones
     private Zones()
     {}
 
-    private static final ZoneRegistry reg = new ZoneRegistry("plugindata/zones.txt");
+    private static final ZoneRegistry reg = new ZoneRegistry("plugindata/ninti/zones.txt");
 
     public static void register(Zone zone)
     { synchronized(reg) { reg.register(zone); } }
