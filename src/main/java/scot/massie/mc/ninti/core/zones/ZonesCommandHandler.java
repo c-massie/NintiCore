@@ -4,6 +4,7 @@ import com.google.common.base.Suppliers;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -24,7 +25,6 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
-import java.util.function.ToIntFunction;
 
 import static net.minecraft.command.Commands.*;
 import static scot.massie.mc.ninti.core.PluginUtils.*;
@@ -105,12 +105,27 @@ public class ZonesCommandHandler
         return builder.buildFuture();
     };
 
-    private static RequiredArgumentBuilder<CommandSource, String> getMutateZoneSubCommand
+    private static LiteralArgumentBuilder<CommandSource> getAtXYZSubcommand
     (
-            ToIntFunction<CommandContext<CommandSource>> doToArea2d,
-            ToIntFunction<CommandContext<CommandSource>> doToArea3d,
-            ToIntFunction<CommandContext<CommandSource>> doToDerivedChunk,
-            ToIntFunction<CommandContext<CommandSource>> doToSpecifiedChunk
+            Command<CommandSource> doWithXZ,
+            Command<CommandSource> doWithXYZ
+    )
+    {
+        return
+        literal("at")
+                .then(argument("coörd arg 1", IntegerArgumentType.integer())
+                        .then(argument("coörd arg 2", IntegerArgumentType.integer())
+                                .then(argument("coörd arg 3", IntegerArgumentType.integer())
+                                        .executes(doWithXYZ))
+                                .executes(doWithXZ)));
+    }
+
+    private static RequiredArgumentBuilder<CommandSource, String> getMutateZoneSubcommand
+    (
+            Command<CommandSource> doToArea2d,
+            Command<CommandSource> doToArea3d,
+            Command<CommandSource> doToDerivedChunk,
+            Command<CommandSource> doToSpecifiedChunk
     )
     {
         return
@@ -119,16 +134,16 @@ public class ZonesCommandHandler
                 .then(literal("chunk")
                         .then(argument("at X", IntegerArgumentType.integer())
                                 .then(argument("at Z", IntegerArgumentType.integer())
-                                        .executes(doToSpecifiedChunk::applyAsInt)))
-                        .executes(doToDerivedChunk::applyAsInt))
+                                        .executes(doToSpecifiedChunk)))
+                        .executes(doToDerivedChunk))
                 .then(argument("coörd arg 1", IntegerArgumentType.integer())
                         .then(argument("coörd arg 2", IntegerArgumentType.integer())
                                 .then(argument("coörd arg 3", IntegerArgumentType.integer())
                                         .then(argument("coörd arg 4", IntegerArgumentType.integer())
                                                 .then(argument("coörd arg 5", IntegerArgumentType.integer())
                                                         .then(argument("coörd arg 6", IntegerArgumentType.integer())
-                                                                .executes(doToArea3d::applyAsInt)))
-                                                .executes(doToArea2d::applyAsInt)))));
+                                                                .executes(doToArea3d)))
+                                                .executes(doToArea2d)))));
     }
 
     public static final LiteralArgumentBuilder<CommandSource> zonesCommand
@@ -141,18 +156,10 @@ public class ZonesCommandHandler
                             .then(literal("in")
                                     .then(argument("world id", StringArgumentType.word())
                                             .suggests(worldIdSuggestionProvider)
-                                            .then(literal("at")
-                                                    .then(argument("coörd arg 1", IntegerArgumentType.integer())
-                                                            .then(argument("coörd arg 2", IntegerArgumentType.integer())
-                                                                    .then(argument("coörd arg 3", IntegerArgumentType.integer())
-                                                                            .executes(ZonesCommandHandler::cmdList_inSpecifiedWorld_xyz))
-                                                                    .executes(ZonesCommandHandler::cmdList_inSpecifiedWorld_xz))))))
-                            .then(literal("at")
-                                    .then(argument("coörd arg 1", IntegerArgumentType.integer())
-                                            .then(argument("coörd arg 2", IntegerArgumentType.integer())
-                                                    .then(argument("coörd arg 3", IntegerArgumentType.integer())
-                                                         .executes(ZonesCommandHandler::cmdList_inDerivedWorld_xyz))
-                                                    .executes(ZonesCommandHandler::cmdList_inDerivedWorld_xz))))
+                                            .then(getAtXYZSubcommand(ZonesCommandHandler::cmdList_inSpecifiedWorld_xz,
+                                                                     ZonesCommandHandler::cmdList_inSpecifiedWorld_xyz))))
+                            .then(getAtXYZSubcommand(ZonesCommandHandler::cmdList_inDerivedWorld_xz,
+                                                     ZonesCommandHandler::cmdList_inDerivedWorld_xyz))
                             .executes(ZonesCommandHandler::cmdList))
                     .then(literal("create")
                             .then(argument("zone name", StringArgumentType.word())
@@ -169,13 +176,13 @@ public class ZonesCommandHandler
                                                             .executes(ZonesCommandHandler::cmdCreateFromChunk_specified))))
                                     .executes(ZonesCommandHandler::cmdCreateFromChunk_derived)))
                     .then(literal("addto")
-                            .then(getMutateZoneSubCommand(
+                            .then(getMutateZoneSubcommand(
                                     ZonesCommandHandler::cmdAddTo_area_2d,
                                     ZonesCommandHandler::cmdAddTo_area_3d,
                                     ZonesCommandHandler::cmdAddTo_chunk_derived,
                                     ZonesCommandHandler::cmdAddTo_chunk_specified)))
                     .then(literal("removefrom")
-                            .then(getMutateZoneSubCommand(
+                            .then(getMutateZoneSubcommand(
                                     ZonesCommandHandler::cmdRemoveFrom_area_2d,
                                     ZonesCommandHandler::cmdRemoveFrom_area_3d,
                                     ZonesCommandHandler::cmdRemoveFrom_chunk_derived,
