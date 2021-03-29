@@ -71,6 +71,9 @@ public final class PluginUtils
         return null;
     }
 
+    public static PlayerEntity getOnlinePlayer(UUID playerId)
+    { return minecraftServer.getPlayerList().getPlayerByUUID(playerId); }
+
     public static boolean playerIsOp(PlayerEntity player)
     { return minecraftServer.getPlayerList().getOppedPlayers().getEntry(player.getGameProfile()) != null; }
 

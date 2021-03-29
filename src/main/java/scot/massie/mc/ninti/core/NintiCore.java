@@ -11,6 +11,8 @@ import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import scot.massie.mc.ninti.core.currencies.Currencies;
+import scot.massie.mc.ninti.core.currencies.Currency;
 import scot.massie.mc.ninti.core.zones.Zones;
 import scot.massie.mc.ninti.core.zones.ZonesCommandHandler;
 
@@ -96,6 +98,8 @@ public class NintiCore
     public void onServerStarting(FMLServerStartingEvent event)
     {
         minecraftServer = event.getServer();
+        Currencies.register(Currency.EXPERIENCE);
+        Currencies.register(Currency.LEVELS);
         PluginEvents.onDataLoaded_internal.invoke(new PluginEvents.DataLoadEventArgs());
         // do something when the server starts
     }
