@@ -11,6 +11,7 @@ import scot.massie.lib.events.InvokableEvent;
 import scot.massie.lib.events.ProtectedEvent;
 import scot.massie.lib.events.SetEvent;
 import scot.massie.lib.events.args.EventArgs;
+import scot.massie.lib.permissions.PermissionStatus;
 import scot.massie.lib.permissions.PermissionsRegistry;
 
 import java.io.IOException;
@@ -774,6 +775,65 @@ public final class Permissions
     {
         synchronized(registry)
         { return registry.getGroupPermissionArg(groupName, permission); }
+    }
+    //endregion
+
+    //region getPermissionStatus
+
+    /**
+     * Gets all of the information pertaining to a permission's relationship with the specified player, as a single
+     * object.
+     * @param playerId The ID of the player to get the relationship information of the given permission of.
+     * @param permission The permission to get the relationship information of for the specific player.
+     * @return A PermissionStatus object, containing the permission, whether or not the player has it, and the
+     *         permission argument if applicable.
+     */
+    public static PermissionStatus getPlayerPermissionStatus(UUID playerId, String permission)
+    {
+        synchronized(registry)
+        { return registry.getUserPermissionStatus(playerId, permission); }
+    }
+
+    /**
+     * Gets all of the information pertaining to a permission's relationship with the given player, as a single
+     * object.
+     * @param player The player to get the relationship information of the given permission of.
+     * @param permission The permission to get the relationship information of for the given player.
+     * @return A PermissionStatus object, containing the permission, whether or not the player has it, and the
+     *         permission argument if applicable.
+     */
+    public static PermissionStatus getPlayerPermissionStatus(PlayerEntity player, String permission)
+    {
+        synchronized(registry)
+        { return registry.getUserPermissionStatus(player.getUniqueID(), permission); }
+    }
+
+    /**
+     * Gets all of the information pertaining to a permission's relationship with the given player, as a single
+     * object.
+     * @param playerProfile The profile of the player to get the relationship information of the given permission of.
+     * @param permission The permission to get the relationship information of for the given player.
+     * @return A PermissionStatus object, containing the permission, whether or not the player has it, and the
+     *         permission argument if applicable.
+     */
+    public static PermissionStatus getPlayerPermissionStatus(GameProfile playerProfile, String permission)
+    {
+        synchronized(registry)
+        { return registry.getUserPermissionStatus(playerProfile.getId(), permission); }
+    }
+
+    /**
+     * Gets all of the information pertaining to a permission's relationship with the specified group, as a single
+     * object.
+     * @param groupName The name of the group to get the relationship information of the given permission of.
+     * @param permission The permission to get the relationship information of for the specified group.
+     * @return A PermissionStatus object, containing the permission, whether or not the group has it, and the permission
+     *         argument if applicable.
+     */
+    public static PermissionStatus getGroupPermissionStatus(String groupName, String permission)
+    {
+        synchronized(registry)
+        { return registry.getGroupPermissionStatus(groupName, permission); }
     }
     //endregion
 
