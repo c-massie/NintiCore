@@ -39,6 +39,15 @@ public final class PluginUtils
     public static String getWorldId(WorldEvent.Save worldSaveEvent)
     { return getWorldId((ServerWorld)(worldSaveEvent.getWorld())); }
 
+    public static ServerWorld getWorldById(String worldId)
+    {
+        for(ServerWorld world : minecraftServer.getWorlds())
+            if(getWorldId(world).equals(worldId))
+                return world;
+
+        return null;
+    }
+
     public static World getDefaultWorld()
     {
         // Assumes the default world is minecraft:overworld - It's not currently clear how to derive the actual default
