@@ -665,8 +665,19 @@ public final class Permissions
      */
     public static boolean commandSourceHasPermission(CommandContext<CommandSource> commandContext,
                                                      String... permissions)
+    { return commandSourceHasPermission(commandContext.getSource(), permissions); }
+
+    /**
+     * Gets whether or not the source of a command has the given permission.
+     * @param commandSource The source of the command being run.
+     * @param permissions The permissions to check for.
+     * @return True if the command is being run by something that doesn't need permission (like the server console) or
+     *         if the source has all the given permissions. Otherwise, false.
+     */
+    public static boolean commandSourceHasPermission(CommandSource commandSource,
+                                                     String... permissions)
     {
-        Entity sourceEntity = commandContext.getSource().getEntity();
+        Entity sourceEntity = commandSource.getEntity();
 
         if(!(sourceEntity instanceof PlayerEntity))
             return true;

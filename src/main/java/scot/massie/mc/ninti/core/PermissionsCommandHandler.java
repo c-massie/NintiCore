@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static scot.massie.mc.ninti.core.PluginUtils.getLastKnownUUIDOfPlayer;
@@ -324,101 +325,89 @@ public final class PermissionsCommandHandler
     };
     //endregion
 
+    private static boolean hasPerm(CommandSource cmdSource, String... perm)
+    { return Permissions.commandSourceHasPermission(cmdSource, perm); }
+
+    private static boolean hasAnyPerm(CommandSource cmdSource, String... perm)
+    {
+        for(String p : perm)
+            if(Permissions.commandSourceHasPermission(cmdSource, p))
+                return true;
+
+        return false;
+    }
+
     //region public static final LiteralArgumentBuilder<CommandSource> permissionCommand = ...
     public static final LiteralArgumentBuilder<CommandSource> permissionCommand
             = Commands.literal("permissions")
-                      .then(Commands.literal("save").executes(PermissionsCommandHandler::cmdSave))
-                      .then(Commands.literal("load").executes(PermissionsCommandHandler::cmdLoad))
-                      .then(Commands.literal("initialise")
-                                    .then(Commands.literal("blank")
-                                                  .executes(PermissionsCommandHandler::cmdInitialiseBlank))
-                                    .then(Commands.literal("presets")
-                                                  .executes(PermissionsCommandHandler::cmdInitialisePresets)))
-                      .then(Commands.literal("list")
-                                    .then(Commands.argument("target", StringArgumentType.word())
-                                                  .suggests(playerNameOrGroupIdSuggestionProvider)
-                                                  .executes(PermissionsCommandHandler::cmdList)))
-                      .then(Commands.literal("listgroups").executes(PermissionsCommandHandler::cmdListGroups))
-                      .then(Commands.literal("add")
-                                    .then(Commands.argument("target", StringArgumentType.word())
-                                                  .suggests(playerNameOrGroupIdSuggestionProvider)
-                                                  .then(Commands.argument("permission to add", MessageArgument.message())
-                                                                .suggests(suggestedPermissionsToAddProvider)
-                                                                .executes(PermissionsCommandHandler::cmdAdd))))
-                      .then(Commands.literal("remove")
-                                    .then(Commands.argument("target", StringArgumentType.word())
-                                                  .suggests(playerNameOrGroupIdSuggestionProvider)
-                                                  .then(Commands.argument("permission to remove", MessageArgument.message())
-                                                                .suggests(suggestedPermissionsToRemoveProvider)
-                                                                .executes(PermissionsCommandHandler::cmdRemove))))
-                      .then(Commands.literal("has")
-                                    .then(Commands.argument("target", StringArgumentType.word())
-                                                  .suggests(playerNameOrGroupIdSuggestionProvider)
-                                                  .then(Commands.argument("permission to check", MessageArgument.message())
-                                                                .suggests(suggestedPermissionsProvider)
-                                                                .executes(PermissionsCommandHandler::cmdHas))))
-                      .then(Commands.literal("help").executes(PermissionsCommandHandler::cmdHelp))
-                      .executes(PermissionsCommandHandler::cmdHelp);
+                    .then(Commands.literal("save")
+                            .requires(src -> hasPerm(src, NintiCore.PERMISSION_PERMISSIONS_FILEHANDLING_SAVE))
+                            .executes(PermissionsCommandHandler::cmdSave))
+                    .then(Commands.literal("load")
+                            .requires(src -> hasPerm(src, NintiCore.PERMISSION_PERMISSIONS_FILEHANDLING_LOAD))
+                            .executes(PermissionsCommandHandler::cmdLoad))
+                    .then(Commands.literal("initialise")
+                            .requires(src -> hasPerm(src, NintiCore.PERMISSION_PERMISSIONS_WRITE_GROUPS,
+                                                          NintiCore.PERMISSION_PERMISSIONS_WRITE_PLAYERS))
+                            .then(Commands.literal("blank").executes(PermissionsCommandHandler::cmdInitialiseBlank))
+                            .then(Commands.literal("presets").executes(PermissionsCommandHandler::cmdInitialisePresets)))
+                    .then(Commands.literal("list")
+                            .requires(src -> hasAnyPerm(src, NintiCore.PERMISSION_PERMISSIONS_READ_GROUPS,
+                                                             NintiCore.PERMISSION_PERMISSIONS_READ_PLAYERS))
+                            .then(Commands.argument("target", StringArgumentType.word())
+                                    .suggests(playerNameOrGroupIdSuggestionProvider)
+                                    .executes(PermissionsCommandHandler::cmdList)))
+                    .then(Commands.literal("listgroups")
+                            .requires(src -> hasPerm(src, NintiCore.PERMISSION_PERMISSIONS_READ_GROUPS))
+                            .executes(PermissionsCommandHandler::cmdListGroups))
+                    .then(Commands.literal("add")
+                            .requires(src -> hasPerm(src, NintiCore.PERMISSION_PERMISSIONS_WRITE_GROUPS,
+                                                          NintiCore.PERMISSION_PERMISSIONS_WRITE_PLAYERS))
+                            .then(Commands.argument("target", StringArgumentType.word())
+                                    .suggests(playerNameOrGroupIdSuggestionProvider)
+                                    .then(Commands.argument("permission to add", MessageArgument.message())
+                                            .suggests(suggestedPermissionsToAddProvider)
+                                            .executes(PermissionsCommandHandler::cmdAdd))))
+                    .then(Commands.literal("remove")
+                            .requires(src -> hasPerm(src, NintiCore.PERMISSION_PERMISSIONS_WRITE_GROUPS,
+                                                          NintiCore.PERMISSION_PERMISSIONS_WRITE_PLAYERS))
+                            .then(Commands.argument("target", StringArgumentType.word())
+                                    .suggests(playerNameOrGroupIdSuggestionProvider)
+                                    .then(Commands.argument("permission to remove", MessageArgument.message())
+                                            .suggests(suggestedPermissionsToRemoveProvider)
+                                            .executes(PermissionsCommandHandler::cmdRemove))))
+                    .then(Commands.literal("has")
+                            .requires(src -> hasAnyPerm(src, NintiCore.PERMISSION_PERMISSIONS_READ_GROUPS,
+                                                             NintiCore.PERMISSION_PERMISSIONS_READ_PLAYERS))
+                            .then(Commands.argument("target", StringArgumentType.word())
+                                    .suggests(playerNameOrGroupIdSuggestionProvider)
+                                    .then(Commands.argument("permission to check", MessageArgument.message())
+                                            .suggests(suggestedPermissionsProvider)
+                                            .executes(PermissionsCommandHandler::cmdHas))))
+                    .then(Commands.literal("help").executes(PermissionsCommandHandler::cmdHelp))
+                    .executes(PermissionsCommandHandler::cmdHelp);
     //endregion
-    
-    private static boolean sourceHasPermission(CommandContext<CommandSource> commandContext, String... permissions)
-    {
-        Entity sourceEntity = commandContext.getSource().getEntity();
-
-        if(!(sourceEntity instanceof PlayerEntity))
-            return true;
-
-        for(int i = 0; i < permissions.length; i++)
-            if(!Permissions.playerHasPermission((PlayerEntity)sourceEntity, permissions[i]))
-                return false;
-
-        return true;
-    }
 
     private static int cmdSave(CommandContext<CommandSource> commandContext)
     {
-        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_FILEHANDLING_SAVE))
-        {
-            sendMessage(commandContext, dontHavePermission);
-            return 0;
-        }
-
         Permissions.save();
         return 1;
     }
 
     private static int cmdLoad(CommandContext<CommandSource> commandContext)
     {
-        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_FILEHANDLING_LOAD))
-        {
-            sendMessage(commandContext, dontHavePermission);
-            return 0;
-        }
-
         Permissions.load();
         return 1;
     }
 
     private static int cmdInitialiseBlank(CommandContext<CommandSource> commandContext)
     {
-        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_WRITE_GROUPS, NintiCore.PERMISSION_PERMISSIONS_WRITE_PLAYERS))
-        {
-            sendMessage(commandContext, dontHavePermission);
-            return 0;
-        }
-
         Permissions.Write.clear();
         return 1;
     }
 
     private static int cmdInitialisePresets(CommandContext<CommandSource> commandContext)
     {
-        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_WRITE_GROUPS, NintiCore.PERMISSION_PERMISSIONS_WRITE_PLAYERS))
-        {
-            sendMessage(commandContext, dontHavePermission);
-            return 0;
-        }
-
         Permissions.Write.initialisePermissionsWithPresets();
         return 1;
     }
@@ -429,7 +418,7 @@ public final class PermissionsCommandHandler
 
         if(targ.isForGroup())
         {
-            if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_READ_GROUPS))
+            if(!Permissions.commandSourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_READ_GROUPS))
             {
                 sendMessage(commandContext, dontHavePermission);
                 return 0;
@@ -441,7 +430,7 @@ public final class PermissionsCommandHandler
             return 1;
         }
 
-        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_READ_PLAYERS))
+        if(!Permissions.commandSourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_READ_PLAYERS))
         {
             sendMessage(commandContext, dontHavePermission);
             return 0;
@@ -464,12 +453,6 @@ public final class PermissionsCommandHandler
 
     private static int cmdListGroups(CommandContext<CommandSource> commandContext)
     {
-        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_READ_GROUPS))
-        {
-            sendMessage(commandContext, dontHavePermission);
-            return 0;
-        }
-
         sendMessage(commandContext, "Groups:\n" + Strings.join(Permissions.getGroupNames(), "\n"));
         return 1;
     }
@@ -481,7 +464,7 @@ public final class PermissionsCommandHandler
 
         if(targ.isForGroup())
         {
-            if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_WRITE_GROUPS))
+            if(!Permissions.commandSourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_WRITE_GROUPS))
             {
                 sendMessage(commandContext, dontHavePermission);
                 return 0;
@@ -491,7 +474,7 @@ public final class PermissionsCommandHandler
             return 1;
         }
 
-        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_WRITE_PLAYERS))
+        if(!Permissions.commandSourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_WRITE_PLAYERS))
         {
             sendMessage(commandContext, dontHavePermission);
             return 0;
@@ -514,7 +497,7 @@ public final class PermissionsCommandHandler
 
         if(targ.isForGroup())
         {
-            if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_WRITE_GROUPS))
+            if(!Permissions.commandSourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_WRITE_GROUPS))
             {
                 sendMessage(commandContext, dontHavePermission);
                 return 0;
@@ -524,7 +507,7 @@ public final class PermissionsCommandHandler
             return 1;
         }
 
-        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_WRITE_PLAYERS))
+        if(!Permissions.commandSourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_WRITE_PLAYERS))
         {
             sendMessage(commandContext, dontHavePermission);
             return 0;
@@ -547,7 +530,7 @@ public final class PermissionsCommandHandler
 
         if(targ.isForGroup())
         {
-            if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_READ_GROUPS))
+            if(!Permissions.commandSourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_READ_GROUPS))
             {
                 sendMessage(commandContext, dontHavePermission);
                 return 0;
@@ -561,7 +544,7 @@ public final class PermissionsCommandHandler
             return 1;
         }
 
-        if(!sourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_READ_PLAYERS))
+        if(!Permissions.commandSourceHasPermission(commandContext, NintiCore.PERMISSION_PERMISSIONS_READ_PLAYERS))
         {
             sendMessage(commandContext, dontHavePermission);
             return 0;
