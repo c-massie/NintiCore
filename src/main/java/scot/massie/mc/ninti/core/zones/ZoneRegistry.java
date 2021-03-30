@@ -274,6 +274,9 @@ public final class ZoneRegistry
     //region Loading
     public void load()
     {
+        if((filePath == null) || (!Files.isReadable(filePath)) || (Files.isDirectory(filePath)))
+            return;
+
         List<Zone> zonesRead;
 
         try
