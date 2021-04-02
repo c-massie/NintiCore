@@ -730,6 +730,59 @@ public final class Permissions
     }
     //endregion
 
+    //region hasAnyPermissionsUnder
+    public static boolean playerHasAnyPermissionUnder(UUID playerId, String permission)
+    {
+        if(PluginUtils.playerIsOp(playerId))
+            return true;
+
+        synchronized(registry)
+        { return registry.userHasAnySubPermissionOf(playerId, permission); }
+    }
+
+    public static boolean playerHasAnyPermissionUnder(PlayerEntity player, String permission)
+    {
+        if(PluginUtils.playerIsOp(player.getUniqueID()))
+            return true;
+
+        synchronized(registry)
+        { return registry.userHasAnySubPermissionOf(player.getUniqueID(), permission); }
+    }
+
+    public static boolean commandSourceHasAnyPermissionUnder(CommandContext<CommandSource> commandContext,
+                                                             String... permissions)
+    { return commandSourceHasAnyPermissionUnder(commandContext.getSource(), permissions); }
+
+    public static boolean commandSourceHasAnyPermissionUnder(CommandSource commandSource,
+                                                             String... permissions)
+    {
+        Entity sourceEntity = commandSource.getEntity();
+
+        if(!(sourceEntity instanceof PlayerEntity))
+            return true;
+
+        PlayerEntity sourcePlayer = (PlayerEntity)sourceEntity;
+
+        if(PluginUtils.playerIsOp(sourcePlayer))
+            return true;
+
+        synchronized(registry)
+        {
+            for(String p : permissions)
+                if(registry.userHasAnySubPermissionOf(sourcePlayer.getUniqueID(), p))
+                    return true;
+        }
+
+        return false;
+    }
+
+    public static boolean groupHasAnyPermissionUnder(String groupName, String permission)
+    {
+        synchronized(registry)
+        { return registry.groupHasAnySubPermissionOf(groupName, permission); }
+    }
+    //endregion
+
     //region getPermissionArgs
 
     /**
