@@ -146,11 +146,23 @@ public class ZonesCommandHandler
                                                 .executes(doToArea2d)))));
     }
 
+    private static boolean hasPerm(CommandSource src, String... perm)
+    { return Permissions.commandSourceHasPermission(src, perm); }
+
+    private static boolean hasAnyPermUnder(CommandSource src, String... perm)
+    { return Permissions.commandSourceHasAnyPermissionUnder(src, perm); }
+
     public static final LiteralArgumentBuilder<CommandSource> zonesCommand
             = literal("zones")
-                    .then(literal("save").executes(ZonesCommandHandler::cmdSave))
-                    .then(literal("load").executes(ZonesCommandHandler::cmdLoad))
+                    .requires(src -> hasAnyPermUnder(src, NintiCore.PERMISSION_ZONES_ROOT))
+                    .then(literal("save")
+                            .requires(src -> hasPerm(src, NintiCore.PERMISSION_ZONES_FILEHANDLING_SAVE))
+                            .executes(ZonesCommandHandler::cmdSave))
+                    .then(literal("load")
+                            .requires(src -> hasPerm(src, NintiCore.PERMISSION_ZONES_FILEHANDLING_LOAD))
+                            .executes(ZonesCommandHandler::cmdLoad))
                     .then(literal("list")
+                            .requires(src -> hasPerm(src, NintiCore.PERMISSION_ZONES_READ))
                             .then(literal("here")
                                     .executes(ZonesCommandHandler::cmdList_here))
                             .then(literal("in")
@@ -162,12 +174,15 @@ public class ZonesCommandHandler
                                                      ZonesCommandHandler::cmdList_inDerivedWorld_xyz))
                             .executes(ZonesCommandHandler::cmdList))
                     .then(literal("create")
+                            .requires(src -> hasPerm(src, NintiCore.PERMISSION_ZONES_WRITE_CREATE))
                             .then(argument("zone name", StringArgumentType.word())
                                     .then(argument("world id", StringArgumentType.word())
                                             .suggests(worldIdSuggestionProvider)
                                             .executes(ZonesCommandHandler::cmdCreate_specifiedWorld))
                                     .executes(ZonesCommandHandler::cmdCreate_derivedWorld)))
                     .then(literal("createfromchunk")
+                            .requires(src -> hasPerm(src, NintiCore.PERMISSION_ZONES_WRITE_CREATE,
+                                                          NintiCore.PERMISSION_ZONES_WRITE_MODIFY_ADDTO))
                             .then(argument("zone name", StringArgumentType.word())
                                     .then(argument("world id", StringArgumentType.word())
                                             .suggests(worldIdSuggestionProvider)
@@ -176,23 +191,27 @@ public class ZonesCommandHandler
                                                             .executes(ZonesCommandHandler::cmdCreateFromChunk_specified))))
                                     .executes(ZonesCommandHandler::cmdCreateFromChunk_derived)))
                     .then(literal("addto")
+                            .requires(src -> hasPerm(src, NintiCore.PERMISSION_ZONES_WRITE_MODIFY_ADDTO))
                             .then(getMutateZoneSubcommand(
                                     ZonesCommandHandler::cmdAddTo_area_2d,
                                     ZonesCommandHandler::cmdAddTo_area_3d,
                                     ZonesCommandHandler::cmdAddTo_chunk_derived,
                                     ZonesCommandHandler::cmdAddTo_chunk_specified)))
                     .then(literal("removefrom")
+                            .requires(src -> hasPerm(src, NintiCore.PERMISSION_ZONES_WRITE_MODIFY_REMOVEFROM))
                             .then(getMutateZoneSubcommand(
                                     ZonesCommandHandler::cmdRemoveFrom_area_2d,
                                     ZonesCommandHandler::cmdRemoveFrom_area_3d,
                                     ZonesCommandHandler::cmdRemoveFrom_chunk_derived,
                                     ZonesCommandHandler::cmdRemoveFrom_chunk_specified)))
                     .then(literal("rename")
+                            .requires(src -> hasPerm(src, NintiCore.PERMISSION_ZONES_WRITE_RENAME))
                             .then(argument("zone name", StringArgumentType.word())
                                     .suggests(existingZoneNameSuggestionProvider)
                                     .then(argument("new zone name", StringArgumentType.word())
                                             .executes(ZonesCommandHandler::cmdRename))))
                     .then(literal("delete")
+                            .requires(src -> hasPerm(src, NintiCore.PERMISSION_ZONES_WRITE_DELETE))
                             .then(argument("zone name", StringArgumentType.word())
                                     .suggests(existingZoneNameSuggestionProvider)
                                     .executes(ZonesCommandHandler::cmdDelete)))
@@ -202,36 +221,18 @@ public class ZonesCommandHandler
 
     private static int cmdSave(CommandContext<CommandSource> cmdContext)
     {
-        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_FILEHANDLING_SAVE))
-        {
-            sendMessage(cmdContext, dontHavePermission);
-            return 0;
-        }
-
         Zones.save();
         return 1;
     }
 
     private static int cmdLoad(CommandContext<CommandSource> cmdContext)
     {
-        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_FILEHANDLING_LOAD))
-        {
-            sendMessage(cmdContext, dontHavePermission);
-            return 0;
-        }
-
         Zones.load();
         return 1;
     }
 
     private static int cmdList(CommandContext<CommandSource> cmdContext)
     {
-        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_READ))
-        {
-            sendMessage(cmdContext, dontHavePermission);
-            return 0;
-        }
-
         sendMessage(cmdContext, "Zones: ");
 
         for(String zn : Zones.getZoneNames())
@@ -242,12 +243,6 @@ public class ZonesCommandHandler
 
     private static int cmdList_here(CommandContext<CommandSource> cmdContext)
     {
-        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_READ))
-        {
-            sendMessage(cmdContext, dontHavePermission);
-            return 0;
-        }
-
         Entity sourceEntity = cmdContext.getSource().getEntity();
 
         if(sourceEntity == null)
@@ -266,12 +261,6 @@ public class ZonesCommandHandler
 
     private static int cmdList_inDerivedWorld_xz(CommandContext<CommandSource> cmdContext)
     {
-        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_READ))
-        {
-            sendMessage(cmdContext, dontHavePermission);
-            return 0;
-        }
-
         Entity sourceEntity = cmdContext.getSource().getEntity();
         String worldId = sourceEntity == null ? getDefaultWorldId()
                                               : getWorldId((ServerWorld)sourceEntity.getEntityWorld());
@@ -288,12 +277,6 @@ public class ZonesCommandHandler
 
     private static int cmdList_inDerivedWorld_xyz(CommandContext<CommandSource> cmdContext)
     {
-        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_READ))
-        {
-            sendMessage(cmdContext, dontHavePermission);
-            return 0;
-        }
-
         Entity sourceEntity = cmdContext.getSource().getEntity();
         String worldId = sourceEntity == null ? getDefaultWorldId()
                                               : getWorldId((ServerWorld)sourceEntity.getEntityWorld());
@@ -311,12 +294,6 @@ public class ZonesCommandHandler
 
     private static int cmdList_inSpecifiedWorld_xz(CommandContext<CommandSource> cmdContext)
     {
-        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_READ))
-        {
-            sendMessage(cmdContext, dontHavePermission);
-            return 0;
-        }
-
         String worldId = StringArgumentType.getString(cmdContext, "world id");
         int x = IntegerArgumentType.getInteger(cmdContext, "coörd arg 1");
         int z = IntegerArgumentType.getInteger(cmdContext, "coörd arg 2");
@@ -331,12 +308,6 @@ public class ZonesCommandHandler
 
     private static int cmdList_inSpecifiedWorld_xyz(CommandContext<CommandSource> cmdContext)
     {
-        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_READ))
-        {
-            sendMessage(cmdContext, dontHavePermission);
-            return 0;
-        }
-
         String worldId = StringArgumentType.getString(cmdContext, "world id");
         int x = IntegerArgumentType.getInteger(cmdContext, "coörd arg 1");
         int y = IntegerArgumentType.getInteger(cmdContext, "coörd arg 2");
@@ -352,12 +323,6 @@ public class ZonesCommandHandler
 
     private static int cmdCreate_derivedWorld(CommandContext<CommandSource> cmdContext)
     {
-        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_WRITE_CREATE))
-        {
-            sendMessage(cmdContext, dontHavePermission);
-            return 0;
-        }
-
         String zoneName = StringArgumentType.getString(cmdContext, "zone name");
 
         Entity sourceEntity = cmdContext.getSource().getEntity();
@@ -371,12 +336,6 @@ public class ZonesCommandHandler
 
     private static int cmdCreate_specifiedWorld(CommandContext<CommandSource> cmdContext)
     {
-        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_WRITE_CREATE))
-        {
-            sendMessage(cmdContext, dontHavePermission);
-            return 0;
-        }
-
         String zoneName = StringArgumentType.getString(cmdContext, "zone name");
         String worldId = StringArgumentType.getString(cmdContext, "world id");
         Zones.register(new Zone(zoneName, worldId));
@@ -385,13 +344,6 @@ public class ZonesCommandHandler
 
     private static int cmdCreateFromChunk_derived(CommandContext<CommandSource> cmdContext)
     {
-        if(!Permissions.commandSourceHasPermission(cmdContext,  NintiCore.PERMISSION_ZONES_WRITE_CREATE,
-                                                                NintiCore.PERMISSION_ZONES_WRITE_MODIFY_ADDTO))
-        {
-            sendMessage(cmdContext, dontHavePermission);
-            return 0;
-        }
-
         String zoneName = StringArgumentType.getString(cmdContext, "zone name");
         Entity sourceEntity = cmdContext.getSource().getEntity();
 
@@ -411,13 +363,6 @@ public class ZonesCommandHandler
 
     private static int cmdCreateFromChunk_specified(CommandContext<CommandSource> cmdContext)
     {
-        if(!Permissions.commandSourceHasPermission(cmdContext,  NintiCore.PERMISSION_ZONES_WRITE_CREATE,
-                                                                NintiCore.PERMISSION_ZONES_WRITE_MODIFY_ADDTO))
-        {
-            sendMessage(cmdContext, dontHavePermission);
-            return 0;
-        }
-
         String zoneName = StringArgumentType.getString(cmdContext, "zone name");
         String worldId = StringArgumentType.getString(cmdContext, "world id");
         int atX = IntegerArgumentType.getInteger(cmdContext, "at X");
@@ -430,12 +375,6 @@ public class ZonesCommandHandler
 
     private static int cmdAddTo_area_2d(CommandContext<CommandSource> cmdContext)
     {
-        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_WRITE_MODIFY_ADDTO))
-        {
-            sendMessage(cmdContext, dontHavePermission);
-            return 0;
-        }
-
         String zoneName = StringArgumentType.getString(cmdContext, "zone name");
         int fromX = IntegerArgumentType.getInteger(cmdContext, "coörd arg 1");
         int fromZ = IntegerArgumentType.getInteger(cmdContext, "coörd arg 2");
@@ -451,12 +390,6 @@ public class ZonesCommandHandler
 
     private static int cmdAddTo_area_3d(CommandContext<CommandSource> cmdContext)
     {
-        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_WRITE_MODIFY_ADDTO))
-        {
-            sendMessage(cmdContext, dontHavePermission);
-            return 0;
-        }
-
         String zoneName = StringArgumentType.getString(cmdContext, "zone name");
         int fromX = IntegerArgumentType.getInteger(cmdContext, "coörd arg 1");
         int fromY = IntegerArgumentType.getInteger(cmdContext, "coörd arg 2");
@@ -474,12 +407,6 @@ public class ZonesCommandHandler
 
     private static int cmdAddTo_chunk_derived(CommandContext<CommandSource> cmdContext)
     {
-        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_WRITE_MODIFY_ADDTO))
-        {
-            sendMessage(cmdContext, dontHavePermission);
-            return 0;
-        }
-
         String zoneName = StringArgumentType.getString(cmdContext, "zone name");
         Entity sourceEntity = cmdContext.getSource().getEntity();
 
@@ -514,12 +441,6 @@ public class ZonesCommandHandler
 
     private static int cmdAddTo_chunk_specified(CommandContext<CommandSource> cmdContext)
     {
-        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_WRITE_MODIFY_ADDTO))
-        {
-            sendMessage(cmdContext, dontHavePermission);
-            return 0;
-        }
-
         String zoneName = StringArgumentType.getString(cmdContext, "zone name");
         int atX = IntegerArgumentType.getInteger(cmdContext, "at X");
         int atZ = IntegerArgumentType.getInteger(cmdContext, "at Z");
@@ -532,12 +453,6 @@ public class ZonesCommandHandler
 
     private static int cmdRemoveFrom_area_2d(CommandContext<CommandSource> cmdContext)
     {
-        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_WRITE_MODIFY_REMOVEFROM))
-        {
-            sendMessage(cmdContext, dontHavePermission);
-            return 0;
-        }
-
         String zoneName = StringArgumentType.getString(cmdContext, "zone name");
         int fromX = IntegerArgumentType.getInteger(cmdContext, "coörd arg 1");
         int fromZ = IntegerArgumentType.getInteger(cmdContext, "coörd arg 2");
@@ -553,12 +468,6 @@ public class ZonesCommandHandler
 
     private static int cmdRemoveFrom_area_3d(CommandContext<CommandSource> cmdContext)
     {
-        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_WRITE_MODIFY_REMOVEFROM))
-        {
-            sendMessage(cmdContext, dontHavePermission);
-            return 0;
-        }
-
         String zoneName = StringArgumentType.getString(cmdContext, "zone name");
         int fromX = IntegerArgumentType.getInteger(cmdContext, "coörd arg 1");
         int fromY = IntegerArgumentType.getInteger(cmdContext, "coörd arg 2");
@@ -576,12 +485,6 @@ public class ZonesCommandHandler
 
     private static int cmdRemoveFrom_chunk_derived(CommandContext<CommandSource> cmdContext)
     {
-        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_WRITE_MODIFY_REMOVEFROM))
-        {
-            sendMessage(cmdContext, dontHavePermission);
-            return 0;
-        }
-
         String zoneName = StringArgumentType.getString(cmdContext, "zone name");
         Entity sourceEntity = cmdContext.getSource().getEntity();
 
@@ -616,12 +519,6 @@ public class ZonesCommandHandler
 
     private static int cmdRemoveFrom_chunk_specified(CommandContext<CommandSource> cmdContext)
     {
-        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_WRITE_MODIFY_REMOVEFROM))
-        {
-            sendMessage(cmdContext, dontHavePermission);
-            return 0;
-        }
-
         String zoneName = StringArgumentType.getString(cmdContext, "zone name");
         int atX = IntegerArgumentType.getInteger(cmdContext, "at X");
         int atZ = IntegerArgumentType.getInteger(cmdContext, "at Z");
@@ -634,12 +531,6 @@ public class ZonesCommandHandler
 
     private static int cmdRename(CommandContext<CommandSource> cmdContext)
     {
-        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_WRITE_RENAME))
-        {
-            sendMessage(cmdContext, dontHavePermission);
-            return 0;
-        }
-
         String oldZoneName = StringArgumentType.getString(cmdContext, "zone name");
         String newZoneName = StringArgumentType.getString(cmdContext, "new zone name");
 
@@ -651,12 +542,6 @@ public class ZonesCommandHandler
 
     private static int cmdDelete(CommandContext<CommandSource> cmdContext)
     {
-        if(!Permissions.commandSourceHasPermission(cmdContext, NintiCore.PERMISSION_ZONES_WRITE_DELETE))
-        {
-            sendMessage(cmdContext, dontHavePermission);
-            return 0;
-        }
-
         String oldZoneName = StringArgumentType.getString(cmdContext, "zone name");
 
         if(!Zones.deregister(oldZoneName))

@@ -337,9 +337,13 @@ public final class PermissionsCommandHandler
         return false;
     }
 
+    private static boolean hasAnyPermUnder(CommandSource src, String perm)
+    { return Permissions.commandSourceHasAnyPermissionUnder(src, perm); }
+
     //region public static final LiteralArgumentBuilder<CommandSource> permissionCommand = ...
     public static final LiteralArgumentBuilder<CommandSource> permissionCommand
             = Commands.literal("permissions")
+                    .requires(src -> hasAnyPermUnder(src, NintiCore.PERMISSION_PERMISSIONS_ROOT))
                     .then(Commands.literal("save")
                             .requires(src -> hasPerm(src, NintiCore.PERMISSION_PERMISSIONS_FILEHANDLING_SAVE))
                             .executes(PermissionsCommandHandler::cmdSave))
