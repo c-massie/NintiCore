@@ -1,6 +1,7 @@
 package scot.massie.mc.ninti.core.zones;
 
 import net.minecraft.entity.Entity;
+import scot.massie.mc.ninti.core.utilclasses.EntityLocation;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -93,7 +94,7 @@ public final class ZoneRegistry
         return result;
     }
 
-    public Collection<Zone> getZonesAt(int x, int z)
+    public Collection<Zone> getZonesAt(String worldId, int x, int z)
     {
         Collection<Zone> result = new ArrayList<>();
 
@@ -104,7 +105,7 @@ public final class ZoneRegistry
         return result;
     }
 
-    public Collection<Zone> getZonesAt(int x, int y, int z)
+    public Collection<Zone> getZonesAt(String worldId, int x, int y, int z)
     {
         Collection<Zone> result = new ArrayList<>();
 
@@ -115,7 +116,7 @@ public final class ZoneRegistry
         return result;
     }
 
-    public Collection<Zone> getZonesAt(double x, double y)
+    public Collection<Zone> getZonesAt(String worldId, double x, double y)
     {
         Collection<Zone> result = new ArrayList<>();
 
@@ -126,12 +127,23 @@ public final class ZoneRegistry
         return result;
     }
 
-    public Collection<Zone> getZonesAt(double x, double y, double z)
+    public Collection<Zone> getZonesAt(String worldId, double x, double y, double z)
     {
         Collection<Zone> result = new ArrayList<>();
 
         for(Zone zone : zones.values())
             if(zone.contains(x, y, z))
+                result.add(zone.copy());
+
+        return result;
+    }
+
+    public Collection<Zone> getZonesAt(EntityLocation location)
+    {
+        Collection<Zone> result = new ArrayList<>();
+
+        for(Zone zone : zones.values())
+            if(zone.contains(location))
                 result.add(zone.copy());
 
         return result;
@@ -159,48 +171,48 @@ public final class ZoneRegistry
         return result;
     }
 
-    public List<String> getZoneNamesAt(int x, int z)
+    public List<String> getZoneNamesAt(String worldId, int x, int z)
     {
         List<String> result = new ArrayList<>();
 
         for(Zone zone : zones.values())
-            if(zone.contains(x, z))
+            if(zone.contains(worldId, x, z))
                 result.add(zone.getName());
 
         result.sort(Comparator.naturalOrder());
         return result;
     }
 
-    public List<String> getZoneNamesAt(int x, int y, int z)
+    public List<String> getZoneNamesAt(String worldId, int x, int y, int z)
     {
         List<String> result = new ArrayList<>();
 
         for(Zone zone : zones.values())
-            if(zone.contains(x, y, z))
+            if(zone.contains(worldId, x, y, z))
                 result.add(zone.getName());
 
         result.sort(Comparator.naturalOrder());
         return result;
     }
 
-    public List<String> getZoneNamesAt(double x, double z)
+    public List<String> getZoneNamesAt(String worldId, double x, double z)
     {
         List<String> result = new ArrayList<>();
 
         for(Zone zone : zones.values())
-            if(zone.contains(x, z))
+            if(zone.contains(worldId, x, z))
                 result.add(zone.getName());
 
         result.sort(Comparator.naturalOrder());
         return result;
     }
 
-    public List<String> getZoneNamesAt(double x, double y, double z)
+    public List<String> getZoneNamesAt(String worldId, double x, double y, double z)
     {
         List<String> result = new ArrayList<>();
 
         for(Zone zone : zones.values())
-            if(zone.contains(x, y, z))
+            if(zone.contains(worldId, x, y, z))
                 result.add(zone.getName());
 
         result.sort(Comparator.naturalOrder());

@@ -1,6 +1,7 @@
 package scot.massie.mc.ninti.core.zones;
 
 import net.minecraft.entity.Entity;
+import scot.massie.mc.ninti.core.utilclasses.EntityLocation;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -29,23 +30,26 @@ public final class Zones
     public static boolean addToZoneIfThere(String zoneName, Zone.ZoneRegion region)
     { synchronized(reg) { return reg.addToZoneIfThere(zoneName, region); } }
 
-    public static Zone get(String zoneName)
+    public static Zone getZone(String zoneName)
     { synchronized(reg) { return reg.get(zoneName); } }
 
     public static List<Zone> getZones()
     { synchronized(reg) { return reg.getZones(); } }
 
-    public static Collection<Zone> getZonesAt(int x, int z)
-    { synchronized(reg) { return reg.getZonesAt(x, z); } }
+    public static Collection<Zone> getZonesAt(String worldId, int x, int z)
+    { synchronized(reg) { return reg.getZonesAt(worldId, x, z); } }
 
-    public static Collection<Zone> getZonesAt(int x, int y, int z)
-    { synchronized(reg) { return reg.getZonesAt(x, y, z); } }
+    public static Collection<Zone> getZonesAt(String worldId, int x, int y, int z)
+    { synchronized(reg) { return reg.getZonesAt(worldId, x, y, z); } }
 
-    public static Collection<Zone> getZonesAt(double x, double z)
-    { synchronized(reg) { return reg.getZonesAt(x, z); } }
+    public static Collection<Zone> getZonesAt(String worldId, double x, double z)
+    { synchronized(reg) { return reg.getZonesAt(worldId, x, z); } }
 
-    public static Collection<Zone> getZonesAt(double x, double y, double z)
-    { synchronized(reg) { return reg.getZonesAt(x, y, z); } }
+    public static Collection<Zone> getZonesAt(String worldId, double x, double y, double z)
+    { synchronized(reg) { return reg.getZonesAt(worldId, x, y, z); } }
+
+    public static Collection<Zone> getZonesAt(EntityLocation location)
+    { synchronized(reg) { return reg.getZonesAt(location); } }
 
     public static Collection<Zone> getZonesEntityIsIn(Entity entity)
     { synchronized(reg) { return reg.getZonesEntityIsIn(entity); } }
@@ -53,17 +57,17 @@ public final class Zones
     public static List<String> getZoneNames()
     { synchronized(reg) { return reg.getZoneNames(); } }
 
-    public static List<String> getZoneNamesAt(int x, int z)
-    { synchronized(reg) { return reg.getZoneNamesAt(x, z); } }
+    public static List<String> getZoneNamesAt(String worldId, int x, int z)
+    { synchronized(reg) { return reg.getZoneNamesAt(worldId, x, z); } }
 
-    public static List<String> getZoneNamesAt(int x, int y, int z)
-    { synchronized(reg) { return reg.getZoneNamesAt(x, y, z); } }
+    public static List<String> getZoneNamesAt(String worldId, int x, int y, int z)
+    { synchronized(reg) { return reg.getZoneNamesAt(worldId, x, y, z); } }
 
-    public static List<String> getZoneNamesAt(double x, double z)
-    { synchronized(reg) { return reg.getZoneNamesAt(x, z); } }
+    public static List<String> getZoneNamesAt(String worldId, double x, double z)
+    { synchronized(reg) { return reg.getZoneNamesAt(worldId, x, z); } }
 
-    public static List<String> getZoneNamesAt(double x, double y, double z)
-    { synchronized(reg) { return reg.getZoneNamesAt(x, y, z); } }
+    public static List<String> getZoneNamesAt(String worldId, double x, double y, double z)
+    { synchronized(reg) { return reg.getZoneNamesAt(worldId, x, y, z); } }
 
     public static List<String> getZoneNamesEntityIsIn(Entity entity)
     { synchronized(reg) { return reg.getZoneNamesEntityIsIn(entity); } }

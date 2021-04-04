@@ -1,6 +1,8 @@
 package scot.massie.mc.ninti.core.zones;
 
 import net.minecraft.entity.Entity;
+import scot.massie.mc.ninti.core.PluginUtils;
+import scot.massie.mc.ninti.core.utilclasses.EntityLocation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -301,72 +303,72 @@ public final class Zone
         { return new ArrayList<>(regions); }
     }
 
-    public boolean contains(int x, int y)
-    {
-        synchronized(regions)
-        {
-            for(int i = regions.size() - 1; i >= 0; i--)
-            {
-                ZoneRegion iregion = regions.get(i);
+    private boolean contains_internal(String worldId, double x, double z)
+    { return this.worldId.equals(worldId) && contains_internal(x, z); }
 
-                if(iregion.contains(x, y))
-                    return !iregion.isNegating();
-            }
+    private boolean contains_internal(String worldId, double x, double y, double z)
+    { return this.worldId.equals(worldId) && contains_internal(x, y, z); }
+
+    private boolean contains_internal(double x, double z)
+    {
+        for(int i = regions.size() - 1; i >= 0; i--)
+        {
+            ZoneRegion iregion = regions.get(i);
+
+            if(iregion.contains(x, z))
+                return !iregion.isNegating();
         }
 
         return false;
     }
+
+    private boolean contains_internal(double x, double y, double z)
+    {
+        for(int i = regions.size() - 1; i >= 0; i--)
+        {
+            ZoneRegion iregion = regions.get(i);
+
+            if(iregion.contains(x, y, z))
+                return !iregion.isNegating();
+        }
+
+        return false;
+    }
+
+    public boolean contains(int x, int z)
+    { synchronized(regions) { return contains_internal(x, z); } }
 
     public boolean contains(int x, int y, int z)
-    {
-        synchronized(regions)
-        {
-            for(int i = regions.size() - 1; i >= 0; i--)
-            {
-                ZoneRegion iregion = regions.get(i);
+    { synchronized(regions) { return contains_internal(x, y, z); } }
 
-                if(iregion.contains(x, y, z))
-                    return !iregion.isNegating();
-            }
-        }
-
-        return false;
-    }
-
-    public boolean contains(double x, double y)
-    {
-        synchronized(regions)
-        {
-            for(int i = regions.size() - 1; i >= 0; i--)
-            {
-                ZoneRegion iregion = regions.get(i);
-
-                if(iregion.contains(x, y))
-                    return !iregion.isNegating();
-            }
-        }
-
-        return false;
-    }
+    public boolean contains(double x, double z)
+    { synchronized(regions) { return contains_internal(x, z); } }
 
     public boolean contains(double x, double y, double z)
-    {
-        synchronized(regions)
-        {
-            for(int i = regions.size() - 1; i >= 0; i--)
-            {
-                ZoneRegion iregion = regions.get(i);
+    { synchronized(regions) { return contains_internal(x, y, z); } }
 
-                if(iregion.contains(x, y, z))
-                    return !iregion.isNegating();
-            }
-        }
+    public boolean contains(String worldId, int x, int z)
+    { synchronized(regions) { return contains_internal(x, z); } }
 
-        return false;
-    }
+    public boolean contains(String worldId, int x, int y, int z)
+    { synchronized(regions) { return contains_internal(x, y, z); } }
+
+    public boolean contains(String worldId, double x, double z)
+    { synchronized(regions) { return contains_internal(x, z); } }
+
+    public boolean contains(String worldId, double x, double y, double z)
+    { synchronized(regions) { return contains_internal(x, y, z); } }
 
     public boolean contains(Entity entity)
-    { return contains(entity.getPosX(), entity.getPosY(), entity.getPosZ()); }
+    {
+        return contains(PluginUtils.getWorldId(entity.getEntityWorld()),
+                        entity.getPosX(),
+                        entity.getPosY(),
+                        entity.getPosZ());
+    }
+
+    public boolean contains(EntityLocation location)
+    { return contains(location.getWorldId(), location.getX(), location.getY(), location.getZ()); }
 
     void addRegion(ZoneRegion region)
     {

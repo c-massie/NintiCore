@@ -269,7 +269,7 @@ public class ZonesCommandHandler
 
         sendMessage(cmdContext, "Zones at " + x + ", " + z + " in " + worldId + ": ");
 
-        for(String zn : Zones.getZoneNamesAt(x, z))
+        for(String zn : Zones.getZoneNamesAt(worldId, x, z))
             sendMessage(cmdContext, " - " + zn);
 
         return 1;
@@ -286,7 +286,7 @@ public class ZonesCommandHandler
 
         sendMessage(cmdContext, "Zones at " + x + ", " + y + ", " + z + " in " + worldId + ": ");
 
-        for(String zn : Zones.getZoneNamesAt(x, y, z))
+        for(String zn : Zones.getZoneNamesAt(worldId, x, y, z))
             sendMessage(cmdContext, " - " + zn);
 
         return 1;
@@ -300,7 +300,7 @@ public class ZonesCommandHandler
 
         sendMessage(cmdContext, "Zones at " + x + ", " + z + " in " + worldId + ": ");
 
-        for(String zn : Zones.getZoneNamesAt(x, z))
+        for(String zn : Zones.getZoneNamesAt(worldId, x, z))
             sendMessage(cmdContext, " - " + zn);
 
         return 1;
@@ -315,7 +315,7 @@ public class ZonesCommandHandler
 
         sendMessage(cmdContext, "Zones at " + x + ", " + y + ", " + z + " in " + worldId + ": ");
 
-        for(String zn : Zones.getZoneNamesAt(x, y, z))
+        for(String zn : Zones.getZoneNamesAt(worldId, x, y, z))
             sendMessage(cmdContext, " - " + zn);
 
         return 1;
@@ -417,7 +417,7 @@ public class ZonesCommandHandler
             return 1;
         }
 
-        Zone existingZone = Zones.get(zoneName);
+        Zone existingZone = Zones.getZone(zoneName);
 
         if(existingZone == null)
         {
@@ -495,7 +495,7 @@ public class ZonesCommandHandler
             return 1;
         }
 
-        Zone existingZone = Zones.get(zoneName);
+        Zone existingZone = Zones.getZone(zoneName);
 
         if(existingZone == null)
         {

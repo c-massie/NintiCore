@@ -33,7 +33,7 @@ public final class PluginUtils
     public static Path getPluginDataFolder()
     { return Paths.get("plugindata"); }
 
-    public static String getWorldId(ServerWorld world)
+    public static String getWorldId(World world)
     { return world.getDimensionKey().getLocation().toString(); }
 
     public static String getWorldId(WorldEvent.Save worldSaveEvent)
