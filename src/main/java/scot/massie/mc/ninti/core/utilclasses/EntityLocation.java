@@ -3,6 +3,8 @@ package scot.massie.mc.ninti.core.utilclasses;
 import net.minecraft.entity.Entity;
 import scot.massie.mc.ninti.core.PluginUtils;
 
+import java.util.Objects;
+
 /**
  * Single class representing an entity's location on the server.
  */
@@ -17,9 +19,13 @@ public final class EntityLocation
      * @param pitch The entity's pitch. This goes from -90 to 90, where -90 is straight up, 90 is straight down, and 0
      *              is level.
      * @param yaw The entity's yaw. This goes from 0-360, and represents how far left or right the entity is facing.
+     * @throws NullPointerException if the world ID given is null.
      */
     public EntityLocation(String worldId, double x, double y, double z, double pitch, double yaw)
     {
+        if(worldId == null)
+            throw new NullPointerException("worldId cannot be null.");
+
         this.worldId = worldId;
         this.x = x;
         this.y = y;
@@ -40,6 +46,37 @@ public final class EntityLocation
              player.getPosZ(),
              player.getPitchYaw().x,
              player.getPitchYaw().y);
+    }
+
+    /**
+     * Creates a new EntityLocation from a string representation of it. Should always accept the output from
+     * EntityLocation's {@link #toString()} method.
+     * @param asString A string representation of an entity location.
+     * @throws NullPointerException if asString is null.
+     * @throws IllegalArgumentException if asString cannot be parsed into an EntityLocation instance.
+     */
+    public EntityLocation(String asString)
+    {
+        if(asString == null)
+            throw new NullPointerException();
+
+        String[] split = asString.split(", ");
+
+        if(split.length < 6)
+            throw new IllegalArgumentException("String passed was not parsable as an entity location.");
+
+        worldId = split[0];
+
+        try
+        {
+            x       = Double.parseDouble(split[1]);
+            y       = Double.parseDouble(split[2]);
+            z       = Double.parseDouble(split[3]);
+            pitch   = Double.parseDouble(split[4]);
+            yaw     = Double.parseDouble(split[5]);
+        }
+        catch(NumberFormatException e)
+        { throw new IllegalArgumentException("String passed was not parsable as an entity location."); }
     }
 
     private final String worldId;
@@ -88,4 +125,31 @@ public final class EntityLocation
      */
     public double getYaw()
     { return yaw; }
+
+    @Override
+    public String toString()
+    { return worldId + ", " + x + ", " + y + ", " + z + ", " + pitch + ", " + yaw; }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if(this == o)
+            return true;
+
+        if(o == null || getClass() != o.getClass())
+            return false;
+
+        EntityLocation other = (EntityLocation)o;
+
+        return Double.compare(other.x, x) == 0
+            && Double.compare(other.y, y) == 0
+            && Double.compare(other.z, z) == 0
+            && Double.compare(other.pitch, pitch) == 0
+            && Double.compare(other.yaw, yaw) == 0
+            && worldId.equals(other.worldId);
+    }
+
+    @Override
+    public int hashCode()
+    { return Objects.hash(worldId, x, y, z, pitch, yaw); }
 }
