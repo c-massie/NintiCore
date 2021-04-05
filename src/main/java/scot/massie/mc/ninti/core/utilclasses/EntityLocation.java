@@ -126,6 +126,23 @@ public final class EntityLocation
     public double getYaw()
     { return yaw; }
 
+    /**
+     * Gets the distance between this location and another.
+     * @param other The location to get the distance of from this to it.
+     * @return The distance between this location and the one passed.
+     */
+    public double getDistanceTo(EntityLocation other)
+    { return Math.sqrt((x * x - other.x * other.x) + (y * y - other.y * other.y) + (z * z - other.z * other.z)); }
+
+    /**
+     * Gets the distance squared between this location and another. If you just need to compare distances, this may be
+     * more performant than {@link #getDistanceTo(EntityLocation)}, as this will not call Math.sqrt.
+     * @param other The location to get the distance squared of from this to it.
+     * @return The distance squared between this location and the one passed.
+     */
+    public double getDistanceSqTo(EntityLocation other)
+    { return (x * x - other.x * other.x) + (y * y - other.y * other.y) + (z * z - other.z * other.z); }
+
     @Override
     public String toString()
     { return worldId + ", " + x + ", " + y + ", " + z + ", " + pitch + ", " + yaw; }
