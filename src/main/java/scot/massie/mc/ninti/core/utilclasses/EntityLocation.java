@@ -1,7 +1,10 @@
 package scot.massie.mc.ninti.core.utilclasses;
 
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.world.server.ServerWorld;
 import scot.massie.mc.ninti.core.PluginUtils;
+import scot.massie.mc.ninti.core.exceptions.NoSuchWorldException;
 
 import java.util.Objects;
 
@@ -142,6 +145,21 @@ public final class EntityLocation
      */
     public double getDistanceSqTo(EntityLocation other)
     { return (x * x - other.x * other.x) + (y * y - other.y * other.y) + (z * z - other.z * other.z); }
+
+    /**
+     * Teleports a given player to the location on the server represented by this EntityLocation.
+     * @param player The player to teleport.
+     * @throws NoSuchWorldException If there is no world by the ID stored in this EntityLocation.
+     */
+    public void tpPlayerToHere(ServerPlayerEntity player) throws NoSuchWorldException
+    {
+        ServerWorld world = PluginUtils.getWorldById(worldId);
+
+        if(world == null)
+            throw new NoSuchWorldException(worldId);
+
+        player.teleport(world, x, y, z, (float)yaw, (float)pitch);
+    }
 
     @Override
     public String toString()
