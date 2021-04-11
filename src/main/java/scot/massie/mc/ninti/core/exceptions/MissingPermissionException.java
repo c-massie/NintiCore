@@ -1,5 +1,7 @@
 package scot.massie.mc.ninti.core.exceptions;
 
+import com.mojang.authlib.GameProfile;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraftforge.common.UsernameCache;
 
 import java.util.UUID;
@@ -20,6 +22,34 @@ public class MissingPermissionException extends Exception
               + permission);
 
         this.playerMissingPermission = playerId;
+        this.permissionMissing = permission;
+    }
+
+    /**
+     * Creates a new MissingPermissionException.
+     * @param player The player missing the permission.
+     * @param permission The permission the player is missing.
+     */
+    public MissingPermissionException(PlayerEntity player, String permission)
+    {
+        super("The player " + player.getGameProfile().getName() + " does not have the required permission: "
+              + permission);
+
+        this.playerMissingPermission = player.getUniqueID();
+        this.permissionMissing = permission;
+    }
+
+    /**
+     * Creates a new MissingPermissionException.
+     * @param player The game profile of the player missing the permission.
+     * @param permission The permission the player is missing.
+     */
+    public MissingPermissionException(GameProfile player, String permission)
+    {
+        super("The player " + player.getName() + " does not have the required permission: "
+              + permission);
+
+        this.playerMissingPermission = player.getId();
         this.permissionMissing = permission;
     }
 
