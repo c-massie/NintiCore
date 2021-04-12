@@ -17,11 +17,32 @@ import net.minecraftforge.event.world.WorldEvent;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.UUID;
 
 public final class PluginUtils
 {
+    public static class Comparators
+    {
+        private Comparators()
+        {}
+
+        public static final Comparator<UUID> playerIdByName = (a, b) ->
+        {
+            String aName = UsernameCache.getLastKnownUsername(a);
+            String bName = UsernameCache.getLastKnownUsername(b);
+
+            if(aName == null)
+                return bName == null ? a.compareTo(b) : 1;
+
+            if(bName == null)
+                return -1;
+
+            return aName.compareTo(bName);
+        };
+    }
+
     private PluginUtils()
     {}
 
