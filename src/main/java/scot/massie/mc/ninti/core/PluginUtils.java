@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.command.CommandSource;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.OpEntry;
 import net.minecraft.util.registry.SimpleRegistry;
@@ -101,7 +102,7 @@ public final class PluginUtils
         return null;
     }
 
-    public static PlayerEntity getOnlinePlayer(UUID playerId)
+    public static ServerPlayerEntity getOnlinePlayer(UUID playerId)
     { return minecraftServer.getPlayerList().getPlayerByUUID(playerId); }
 
     public static boolean playerIsOp(PlayerEntity player)
