@@ -23,17 +23,31 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Repository for miscellanous minecraft-related convenience methods.
+ * Repository for miscellaneous minecraft-related convenience methods.
  */
 public final class PluginUtils
 {
+    /**
+     * Repository for miscellaneous minecraft-related comparators.
+     */
     public static class Comparators
     {
         private Comparators()
         {}
 
-        public static final Comparator<UUID> playerIdByName = (a, b) ->
+        /**
+         * Compares UUIDs according to the username of the player they represent if they represent a player. If they
+         * don't represent a player, compares the UUIDs directly, where UUIDs representing a player come before. Nulls
+         * come first.
+         */
+        public static final Comparator<UUID> PLAYER_ID_BY_NAME = (a, b) ->
         {
+            if(a == null)
+                return b == null ? 0 : -1;
+
+            if(b == null)
+                return 1;
+
             String aName = UsernameCache.getLastKnownUsername(a);
             String bName = UsernameCache.getLastKnownUsername(b);
 
