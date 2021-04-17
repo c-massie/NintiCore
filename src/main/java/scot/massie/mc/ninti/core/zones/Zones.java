@@ -21,13 +21,13 @@ public final class Zones
     public static void register(Zone zone)
     { synchronized(reg) { reg.register(zone); } }
 
-    public static boolean deregister(String zoneName)
+    public static Zone deregister(String zoneName)
     { synchronized(reg) { return reg.deregister(zoneName); } }
 
-    public static boolean rename(String zoneName, String newZoneName)
+    public static Zone rename(String zoneName, String newZoneName)
     { synchronized(reg) { return reg.rename(zoneName, newZoneName); } }
 
-    public static boolean addToZoneIfThere(String zoneName, Zone.ZoneRegion region)
+    public static Zone addToZoneIfThere(String zoneName, Zone.ZoneRegion region)
     { synchronized(reg) { return reg.addToZoneIfThere(zoneName, region); } }
 
     public static Zone getZone(String zoneName)
@@ -68,6 +68,9 @@ public final class Zones
 
     public static List<String> getZoneNamesAt(String worldId, double x, double y, double z)
     { synchronized(reg) { return reg.getZoneNamesAt(worldId, x, y, z); } }
+
+    public static List<String> getZoneNamesAt(EntityLocation location)
+    { synchronized(reg) { return reg.getZoneNamesAt(location); } }
 
     public static List<String> getZoneNamesEntityIsIn(Entity entity)
     { synchronized(reg) { return reg.getZoneNamesEntityIsIn(entity); } }

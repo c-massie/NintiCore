@@ -382,7 +382,7 @@ public class ZonesCommandHandler
         int toZ = IntegerArgumentType.getInteger(cmdContext, "coörd arg 4");
         Zone.ZoneRegionRectangle region = new Zone.ZoneRegionRectangle(fromX, fromZ, toX, toZ);
 
-        if(!Zones.addToZoneIfThere(zoneName, region))
+        if(Zones.addToZoneIfThere(zoneName, region) == null)
             sendMessage(cmdContext, "No zone found by the name " + zoneName);
 
         return 1;
@@ -399,7 +399,7 @@ public class ZonesCommandHandler
         int toZ = IntegerArgumentType.getInteger(cmdContext, "coörd arg 6");
         Zone.ZoneRegionCuboid region = new Zone.ZoneRegionCuboid(fromX, fromY, fromZ, toX, toY, toZ);
 
-        if(!Zones.addToZoneIfThere(zoneName, region))
+        if(Zones.addToZoneIfThere(zoneName, region) == null)
             sendMessage(cmdContext, "No zone found by the name " + zoneName);
 
         return 1;
@@ -433,7 +433,7 @@ public class ZonesCommandHandler
             return 1;
         }
 
-        if(!Zones.addToZoneIfThere(zoneName, Zone.ZoneRegionRectangle.ofEntitysChunk(sourceEntity)))
+        if(Zones.addToZoneIfThere(zoneName, Zone.ZoneRegionRectangle.ofEntitysChunk(sourceEntity)) == null)
             sendMessage(cmdContext, "No zone found by the name " + zoneName);
 
         return 1;
@@ -445,7 +445,7 @@ public class ZonesCommandHandler
         int atX = IntegerArgumentType.getInteger(cmdContext, "at X");
         int atZ = IntegerArgumentType.getInteger(cmdContext, "at Z");
 
-        if(!Zones.addToZoneIfThere(zoneName, Zone.ZoneRegionRectangle.ofChunkAt(atX, atZ)))
+        if(Zones.addToZoneIfThere(zoneName, Zone.ZoneRegionRectangle.ofChunkAt(atX, atZ)) == null)
             sendMessage(cmdContext, "No zone found by the name " + zoneName);
 
         return 1;
@@ -460,7 +460,7 @@ public class ZonesCommandHandler
         int toZ = IntegerArgumentType.getInteger(cmdContext, "coörd arg 4");
         Zone.ZoneRegionRectangle region = new Zone.ZoneRegionRectangle(fromX, fromZ, toX, toZ).negating();
 
-        if(!Zones.addToZoneIfThere(zoneName, region))
+        if(Zones.addToZoneIfThere(zoneName, region) == null)
             sendMessage(cmdContext, "No zone found by the name " + zoneName);
 
         return 1;
@@ -477,7 +477,7 @@ public class ZonesCommandHandler
         int toZ = IntegerArgumentType.getInteger(cmdContext, "coörd arg 6");
         Zone.ZoneRegionCuboid region = new Zone.ZoneRegionCuboid(fromX, fromY, fromZ, toX, toY, toZ).negating();
 
-        if(!Zones.addToZoneIfThere(zoneName, region))
+        if(Zones.addToZoneIfThere(zoneName, region) == null)
             sendMessage(cmdContext, "No zone found by the name " + zoneName);
 
         return 1;
@@ -511,7 +511,7 @@ public class ZonesCommandHandler
             return 1;
         }
 
-        if(!Zones.addToZoneIfThere(zoneName, Zone.ZoneRegionRectangle.ofEntitysChunk(sourceEntity).negating()))
+        if(Zones.addToZoneIfThere(zoneName, Zone.ZoneRegionRectangle.ofEntitysChunk(sourceEntity).negating()) == null)
             sendMessage(cmdContext, "No zone found by the name " + zoneName);
 
         return 1;
@@ -523,7 +523,7 @@ public class ZonesCommandHandler
         int atX = IntegerArgumentType.getInteger(cmdContext, "at X");
         int atZ = IntegerArgumentType.getInteger(cmdContext, "at Z");
 
-        if(!Zones.addToZoneIfThere(zoneName, Zone.ZoneRegionRectangle.ofChunkAt(atX, atZ).negating()))
+        if(Zones.addToZoneIfThere(zoneName, Zone.ZoneRegionRectangle.ofChunkAt(atX, atZ).negating()) == null)
             sendMessage(cmdContext, "No zone found by the name " + zoneName);
 
         return 1;
@@ -534,7 +534,7 @@ public class ZonesCommandHandler
         String oldZoneName = StringArgumentType.getString(cmdContext, "zone name");
         String newZoneName = StringArgumentType.getString(cmdContext, "new zone name");
 
-        if(!Zones.rename(oldZoneName, newZoneName))
+        if(Zones.rename(oldZoneName, newZoneName) == null)
             sendMessage(cmdContext, "No zone found by the name " + oldZoneName);
 
         return 1;
@@ -544,7 +544,7 @@ public class ZonesCommandHandler
     {
         String oldZoneName = StringArgumentType.getString(cmdContext, "zone name");
 
-        if(!Zones.deregister(oldZoneName))
+        if(Zones.deregister(oldZoneName) == null)
             sendMessage(cmdContext, "No zone found by the name " + oldZoneName);
 
         return 1;
