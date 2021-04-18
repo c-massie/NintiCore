@@ -11,7 +11,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.function.Function;
 
 /**
  * Registry for registering areas of the server's worlds to be indentifiable by name.
@@ -24,6 +23,20 @@ public final class ZoneRegistry
      */
     public ZoneRegistry(String filePath)
     { this.filePath = Paths.get(filePath); }
+
+    /**
+     * Creates a new zone registry.
+     * @param filePath The file path to save the zone registry's file at.
+     */
+    public ZoneRegistry(Path filePath)
+    { this.filePath = filePath; }
+
+    /**
+     * Creates a new zone registry.
+     * @param filePath The file path to save the zone registry's file at.
+     */
+    public ZoneRegistry(File filePath)
+    { this.filePath = filePath.toPath(); }
 
     final Map<String, Zone> zones = new HashMap<>();
     private final Path filePath;

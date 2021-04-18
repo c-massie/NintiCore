@@ -16,6 +16,8 @@ import scot.massie.mc.ninti.core.currencies.Currency;
 import scot.massie.mc.ninti.core.zones.Zones;
 import scot.massie.mc.ninti.core.zones.ZonesCommandHandler;
 
+import java.nio.file.Path;
+
 import static scot.massie.mc.ninti.core.PluginUtils.*;
 
 // The value here should match an entry in the META-INF/mods.toml file
@@ -42,6 +44,8 @@ public class NintiCore
     public static final String PERMISSION_ZONES_WRITE_MODIFY_REMOVEFROM = "ninti.zones.write.modify.removefrom";
     public static final String PERMISSION_ZONES_FILEHANDLING_SAVE       = "ninti.zones.files.save";
     public static final String PERMISSION_ZONES_FILEHANDLING_LOAD       = "ninti.zones.files.load";
+
+    public static final Path DATA_FOLDER = PluginUtils.getPluginDataFolder().resolve("ninti");
 
     // Directly reference a log4j logger.
     private static final Logger LOGGER = LogManager.getLogger();
