@@ -155,6 +155,18 @@ public final class PluginUtils
     { cmdContext.getSource().sendFeedback(new StringTextComponent(msg), true); }
 
     /**
+     * Sends a message to the given player. Displays the text in that player's chat.
+     * @param player The player to send a message to.
+     * @param msg The message to send.
+     */
+    public static void sendMessage(PlayerEntity player, String msg)
+    {
+        // References to PlayerEntity.sendMessage(...) don't list a second parameter, the UUID. I've passed in null.
+        // TO DO: Test to see if this is usable, or if it results in a null pointer error.
+        player.sendMessage(new StringTextComponent(msg), null);
+    }
+
+    /**
      * Gets the last known UUID of the player by the given username.
      * @param username The username of the player to get the UUID of.
      * @return the UUID of the player, or null if the player has not been recorded by this server.
