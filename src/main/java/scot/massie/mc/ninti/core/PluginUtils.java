@@ -183,7 +183,7 @@ public final class PluginUtils
     /**
      * Gets the online player with the given ID.
      * @param playerId The player's ID.
-     * @return The online player with the given ID, or null if not player is currently online with the given ID.
+     * @return The online player with the given ID, or null if no player is currently online with the given ID.
      */
     public static ServerPlayerEntity getOnlinePlayer(UUID playerId)
     { return minecraftServer.getPlayerList().getPlayerByUUID(playerId); }

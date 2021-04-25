@@ -3,6 +3,7 @@ package scot.massie.mc.ninti.core.exceptions;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraftforge.common.UsernameCache;
+import scot.massie.mc.ninti.core.PluginUtils;
 
 import java.util.UUID;
 
@@ -66,8 +67,15 @@ public class MissingPermissionException extends Exception
      * Gets the ID of the player missing the permission.
      * @return The player ID.
      */
-    public UUID getPlayer()
+    public UUID getPlayerId()
     { return playerMissingPermission; }
+
+    /**
+     * Gets the player missing the permission.
+     * @return The player, or null if the represented player is not online.
+     */
+    public PlayerEntity getPlayer()
+    { return PluginUtils.getOnlinePlayer(playerMissingPermission); }
 
     /**
      * Gets the permission the player is missing but requires.
