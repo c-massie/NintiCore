@@ -814,8 +814,12 @@ public final class Permissions
         synchronized(registry)
         {
             for(String p : permissions)
-                if(!registry.userHasPermission(sourcePlayer.getUniqueID(), p))
-                    throw new PlayerMissingPermissionException(sourcePlayer, p);
+            {
+                try
+                { registry.assertUserHasPermission(sourcePlayer.getUniqueID(), p); }
+                catch(UserMissingPermissionException e)
+                { throw new PlayerMissingPermissionException(sourcePlayer, p); }
+            }
         }
     }
 
