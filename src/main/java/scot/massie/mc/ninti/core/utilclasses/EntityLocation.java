@@ -130,6 +130,23 @@ public final class EntityLocation
     { return yaw; }
 
     /**
+     * Gets whether or not a world exists in this server with this location's world name.
+     * @return True if the world this location references exists. Otherwise, false.
+     */
+    public boolean worldExists()
+    { return PluginUtils.getWorldById(worldId) != null; }
+
+    /**
+     * Asserts that the world this location refers to exists.
+     * @throws NoSuchWorldException If the world this location refers to doesn't exist.
+     */
+    public void assertWorldExists() throws NoSuchWorldException
+    {
+        if(PluginUtils.getWorldById(worldId) == null)
+            throw new NoSuchWorldException(worldId);
+    }
+
+    /**
      * Gets the distance between this location and another.
      * @param other The location to get the distance of from this to it.
      * @return The distance between this location and the one passed.
