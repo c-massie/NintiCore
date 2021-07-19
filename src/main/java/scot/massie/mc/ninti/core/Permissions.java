@@ -13,6 +13,8 @@ import scot.massie.lib.events.SetEvent;
 import scot.massie.lib.events.args.EventArgs;
 import scot.massie.lib.permissions.PermissionStatus;
 import scot.massie.lib.permissions.PermissionsRegistry;
+import scot.massie.lib.permissions.exceptions.UserMissingPermissionException;
+import scot.massie.mc.ninti.core.exceptions.PlayerMissingPermissionException;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -728,6 +730,95 @@ public final class Permissions
         synchronized(registry)
         { return registry.groupHasPermission(groupName, permission); }
     }
+    //endregion
+
+    //region assertHasPermissions
+
+    /**
+     * Asserts that a player represented by the ID has the given permission.
+     * @param playerId The ID of the player.
+     * @param permission The permission to assert that the player has.
+     * @throws PlayerMissingPermissionException If the player does not have the given permission.
+     */
+    public static void assertPlayerHasPermission(UUID playerId, String permission)
+            throws PlayerMissingPermissionException
+    {
+        if(PluginUtils.playerIsOp(playerId))
+            return;
+
+        synchronized(registry)
+        {
+            try
+            { registry.assertUserHasPermission(playerId, permission); }
+            catch(UserMissingPermissionException e)
+            { throw new PlayerMissingPermissionException(playerId, permission); }
+        }
+    }
+
+    /**
+     * Asserts that a player has the given permission.
+     * @param player The player.
+     * @param permission The permission to assert that the player has.
+     * @throws PlayerMissingPermissionException If the player does not have the given permission.
+     */
+    public static void assertPlayerHasPermission(PlayerEntity player, String permission)
+            throws PlayerMissingPermissionException
+    {
+        if(PluginUtils.playerIsOp(player))
+            return;
+
+        synchronized(registry)
+        {
+            try
+            { registry.assertUserHasPermission(player.getUniqueID(), permission); }
+            catch(UserMissingPermissionException e)
+            { throw new PlayerMissingPermissionException(player.getUniqueID(), permission); }
+        }
+    }
+
+    /**
+     * Asserts that the source of a command has the given permission.
+     * @param commandContext The command context object of the command being run.
+     * @param permissions The permissions to check for.
+     * @throws PlayerMissingPermissionException If the command is being run by something that needs permission (that is,
+     *                                          a player) and the source does not have all the given permissions.
+     */
+    public static void assertCommandSourceHasPermission(CommandContext<CommandSource> commandContext,
+                                                        String... permissions)
+            throws PlayerMissingPermissionException
+    { assertCommandSourceHasPermission(commandContext.getSource(), permissions); }
+
+    /**
+     * Asserts that the source of a command has the given permission.
+     * @param commandSource The source of the command being run.
+     * @param permissions The permissions to check for.
+     * @throws PlayerMissingPermissionException If the command is being run by something that needs permission (that is,
+     *                                          a player) and the source does not have all the given permissions.
+     */
+    public static void assertCommandSourceHasPermission(CommandSource commandSource,
+                                                           String... permissions)
+            throws PlayerMissingPermissionException
+    {
+        Entity sourceEntity = commandSource.getEntity();
+
+        if(!(sourceEntity instanceof PlayerEntity))
+            return;
+
+        PlayerEntity sourcePlayer = (PlayerEntity)sourceEntity;
+
+        if(PluginUtils.playerIsOp(sourcePlayer))
+            return;
+
+        List<String> permissionChecks = new ArrayList<>();
+
+        synchronized(registry)
+        {
+            for(String p : permissions)
+                if(!registry.userHasPermission(sourcePlayer.getUniqueID(), p))
+                    throw new PlayerMissingPermissionException(sourcePlayer, p);
+        }
+    }
+
     //endregion
 
     //region hasAnyPermissionsUnder

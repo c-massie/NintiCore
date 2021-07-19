@@ -3,6 +3,7 @@ package scot.massie.mc.ninti.core.exceptions;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraftforge.common.UsernameCache;
+import scot.massie.lib.permissions.exceptions.UserMissingPermissionException;
 import scot.massie.mc.ninti.core.PluginUtils;
 
 import java.util.UUID;
@@ -10,20 +11,17 @@ import java.util.UUID;
 /**
  * Thrown when a player needs a permission they do not have to do something.
  */
-public class MissingPermissionException extends Exception
+public class PlayerMissingPermissionException extends UserMissingPermissionException
 {
     /**
      * Creates a new MissingPermissionException.
      * @param playerId The ID of the player missing the permission.
      * @param permission The permission the player is missing.
      */
-    public MissingPermissionException(UUID playerId, String permission)
+    public PlayerMissingPermissionException(UUID playerId, String permission)
     {
-        super("The player " + getHowToReferToPlayer(playerId) + " does not have the required permission: "
-              + permission);
-
-        this.playerMissingPermission = playerId;
-        this.permissionMissing = permission;
+        super(playerId, "The player " + getHowToReferToPlayer(playerId) + " does not have the required permission: "
+                        + permission);
     }
 
     /**
@@ -31,28 +29,16 @@ public class MissingPermissionException extends Exception
      * @param player The player missing the permission.
      * @param permission The permission the player is missing.
      */
-    public MissingPermissionException(PlayerEntity player, String permission)
-    {
-        super("The player " + player.getGameProfile().getName() + " does not have the required permission: "
-              + permission);
-
-        this.playerMissingPermission = player.getUniqueID();
-        this.permissionMissing = permission;
-    }
+    public PlayerMissingPermissionException(PlayerEntity player, String permission)
+    { this(player.getUniqueID(), permission); }
 
     /**
      * Creates a new MissingPermissionException.
      * @param player The game profile of the player missing the permission.
      * @param permission The permission the player is missing.
      */
-    public MissingPermissionException(GameProfile player, String permission)
-    {
-        super("The player " + player.getName() + " does not have the required permission: "
-              + permission);
-
-        this.playerMissingPermission = player.getId();
-        this.permissionMissing = permission;
-    }
+    public PlayerMissingPermissionException(GameProfile player, String permission)
+    { this(player.getId(), permission); }
 
     private static String getHowToReferToPlayer(UUID playerId)
     {
@@ -60,27 +46,17 @@ public class MissingPermissionException extends Exception
         return name != null ? name : "with the ID " + playerId;
     }
 
-    protected final UUID playerMissingPermission;
-    protected final String permissionMissing;
-
     /**
      * Gets the ID of the player missing the permission.
      * @return The player ID.
      */
     public UUID getPlayerId()
-    { return playerMissingPermission; }
+    { return (UUID)this.getUserId(); }
 
     /**
      * Gets the player missing the permission.
      * @return The player, or null if the represented player is not online.
      */
     public PlayerEntity getPlayer()
-    { return PluginUtils.getOnlinePlayer(playerMissingPermission); }
-
-    /**
-     * Gets the permission the player is missing but requires.
-     * @return The concerned permission.
-     */
-    public String getPermission()
-    { return permissionMissing; }
+    { return PluginUtils.getOnlinePlayer(getPlayerId()); }
 }
