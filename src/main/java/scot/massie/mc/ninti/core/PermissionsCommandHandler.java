@@ -13,7 +13,6 @@ import joptsimple.internal.Strings;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.MessageArgument;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
@@ -26,7 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static scot.massie.mc.ninti.core.PluginUtils.getLastKnownUUIDOfPlayer;
@@ -69,9 +67,6 @@ public final class PermissionsCommandHandler
         private final String playerName;
         private final UUID playerId;
 
-        public boolean isForPlayer()
-        { return groupName == null; }
-
         public boolean hasPlayerName()
         { return playerName != null; }
 
@@ -108,13 +103,14 @@ public final class PermissionsCommandHandler
     {}
 
     private static final int cacheTimeoutInSeconds = 15;
+    private static final int suggestionCacheSize = 10000;
     private static final String dontHavePermission = "You don't have permission to do that.";
     private static final String noSuggestionsSuggestion = "(No suggestions)";
 
     //region Suggestion provider caches
-    static LoadingCache<UUID, List<String>> cachedSuggestionsToAddToPlayers
+    private static final LoadingCache<UUID, List<String>> cachedSuggestionsToAddToPlayers
             = CacheBuilder.newBuilder()
-                          .maximumSize(10000)
+                          .maximumSize(suggestionCacheSize)
                           .expireAfterWrite(cacheTimeoutInSeconds, TimeUnit.SECONDS)
                           .build(new CacheLoader<UUID, List<String>>()
     {
@@ -135,14 +131,14 @@ public final class PermissionsCommandHandler
         }
     });
 
-    static LoadingCache<String, List<String>> cachedSuggestionsToAddToGroups
+    private static final LoadingCache<String, List<String>> cachedSuggestionsToAddToGroups
             = CacheBuilder.newBuilder()
-                          .maximumSize(10000)
+                          .maximumSize(suggestionCacheSize)
                           .expireAfterWrite(cacheTimeoutInSeconds, TimeUnit.SECONDS)
                           .build(new CacheLoader<String, List<String>>()
     {
         @Override @ParametersAreNonnullByDefault
-        public List<String> load(String key) throws Exception
+        public List<String> load(String key)
         {
             List<String> result = new ArrayList<>();
 
@@ -161,9 +157,9 @@ public final class PermissionsCommandHandler
         }
     });
 
-    static LoadingCache<UUID, List<String>> cachedSuggestionsToRemoveFromPlayers
+    private static final LoadingCache<UUID, List<String>> cachedSuggestionsToRemoveFromPlayers
             = CacheBuilder.newBuilder()
-                          .maximumSize(10000)
+                          .maximumSize(suggestionCacheSize)
                           .expireAfterWrite(cacheTimeoutInSeconds, TimeUnit.SECONDS)
                           .build(new CacheLoader<UUID, List<String>>()
     {
@@ -172,9 +168,9 @@ public final class PermissionsCommandHandler
         { return Permissions.getGroupsAndPermissionsOfPlayer(key); }
     });
 
-    static LoadingCache<String, List<String>> cachedSuggestionsToRemoveFromGroups
+    private static final LoadingCache<String, List<String>> cachedSuggestionsToRemoveFromGroups
             = CacheBuilder.newBuilder()
-                          .maximumSize(10000)
+                          .maximumSize(suggestionCacheSize)
                           .expireAfterWrite(cacheTimeoutInSeconds, TimeUnit.SECONDS)
                           .build(new CacheLoader<String, List<String>>()
     {
@@ -183,9 +179,9 @@ public final class PermissionsCommandHandler
         { return Permissions.getGroupsAndPermissionsOfGroup(key); }
     });
 
-    static LoadingCache<CommandContext<CommandSource>, Boolean> cachedHasReadPermissions
+    private static final LoadingCache<CommandContext<CommandSource>, Boolean> cachedHasReadPermissions
             = CacheBuilder.newBuilder()
-                          .maximumSize(10000)
+                          .maximumSize(suggestionCacheSize)
                           .expireAfterWrite(cacheTimeoutInSeconds, TimeUnit.SECONDS)
                           .build(new CacheLoader<CommandContext<CommandSource>, Boolean>()
     {
@@ -202,7 +198,7 @@ public final class PermissionsCommandHandler
         }
     });
 
-    static Supplier<List<String>> cachedSuggestionsToSuggest
+    private static final Supplier<List<String>> cachedSuggestionsToSuggest
             = Suppliers.memoizeWithExpiration(Permissions::getGroupNamesAndSuggestedPermissions,
                                               cacheTimeoutInSeconds,
                                               TimeUnit.SECONDS);
@@ -416,7 +412,9 @@ public final class PermissionsCommandHandler
         return 1;
     }
 
-    private static int cmdList(CommandContext<CommandSource> commandContext) throws CommandSyntaxException
+    private static int cmdList(
+            @SuppressWarnings("BoundedWildcard") /* Doesn't make sense to do that in this context */
+            CommandContext<CommandSource> commandContext)
     {
         TargetReferenced targ = new TargetReferenced(StringArgumentType.getString(commandContext, "target"));
 
@@ -455,7 +453,9 @@ public final class PermissionsCommandHandler
         return 1;
     }
 
-    private static int cmdListGroups(CommandContext<CommandSource> commandContext)
+    private static int cmdListGroups(
+            @SuppressWarnings("BoundedWildcard") /* Doesn't make sense to do that in this context */
+            CommandContext<CommandSource> commandContext)
     {
         sendMessage(commandContext, "Groups:\n" + Strings.join(Permissions.getGroupNames(), "\n"));
         return 1;
@@ -578,7 +578,9 @@ public final class PermissionsCommandHandler
         return 1;
     }
 
-    private static int cmdHelp(CommandContext<CommandSource> commandContext)
+    private static int cmdHelp(
+            @SuppressWarnings("BoundedWildcard") /* Doesn't make sense to do that in this context */
+            CommandContext<CommandSource> commandContext)
     {
         String clickHereText = "Click here to go to the github page for this mod.";
         String helpUrl = "https://github.com/c-massie/NintiCore";

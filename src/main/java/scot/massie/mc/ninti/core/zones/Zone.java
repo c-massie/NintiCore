@@ -309,12 +309,13 @@ public final class Zone
          */
         static ZoneRegionRectangle ofChunkAt(int x, int z)
         {
-            int minX = (x - (x % 16));
-            int minZ = (z - (z % 16));
-            if(x < 0) minX -= 16;
-            if(z < 0) minZ -= 16;
-            int maxX = minX + 15;
-            int maxZ = minZ + 15;
+            final int chunkWidth = 16;
+            int minX = (x - (x % chunkWidth));
+            int minZ = (z - (z % chunkWidth));
+            if(x < 0) minX -= chunkWidth;
+            if(z < 0) minZ -= chunkWidth;
+            int maxX = minX + chunkWidth - 1;
+            int maxZ = minZ + chunkWidth - 1;
             return new ZoneRegionRectangle(minX, minZ, maxX, maxZ);
         }
 
@@ -326,10 +327,11 @@ public final class Zone
          */
         static ZoneRegionRectangle ofChunk(int chunkX, int chunkZ)
         {
-            int minX = chunkX * 16;
-            int minZ = chunkZ * 16;
-            int maxX = minX + 15;
-            int maxZ = minZ + 15;
+            final int chunkWidth = 16;
+            int minX = chunkX * chunkWidth;
+            int minZ = chunkZ * chunkWidth;
+            int maxX = minX + chunkWidth - 1;
+            int maxZ = minZ + chunkWidth - 1;
             return new ZoneRegionRectangle(minX, minZ, maxX, maxZ);
         }
 
@@ -500,7 +502,7 @@ public final class Zone
     /**
      * Gets whether or not this zone contains the given XYZ coördinate, disregarding world.
      * @param x The X coördinate.
-     * @param x The Y coördinate.
+     * @param y The Y coördinate.
      * @param z The Z coördinate.
      * @return True if this zone contains a point at the given XYZ coördinate, disregarding the world. Otherwise, false.
      */
@@ -534,7 +536,7 @@ public final class Zone
      * Gets whether or not this zone contains the given XYZ coördinate.
      * @param worldId The ID of the world the given coördinate is in.
      * @param x The X coördinate.
-     * @param x The Y coördinate.
+     * @param y The Y coördinate.
      * @param z The Z coördinate.
      * @return True if this zone contains the given XYZ coördinate. Otherwise, false.
      */
@@ -555,7 +557,7 @@ public final class Zone
      * Gets whether or not this zone contains the given XYZ coördinate.
      * @param worldId The ID of the world the given coördinate is in.
      * @param x The X coördinate.
-     * @param x The Y coördinate.
+     * @param y The Y coördinate.
      * @param z The Z coördinate.
      * @return True if this zone contains the given XYZ coördinate. Otherwise, false.
      */

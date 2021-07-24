@@ -12,7 +12,7 @@ import java.util.UUID;
 /**
  * Static registry for currencies, allowing {@link Currency currencies} to be registered and accessed by name.
  */
-public class Currencies
+public final class Currencies
 {
     /**
      * Thrown if a currency is referenced by name, but no currency exists by that name.

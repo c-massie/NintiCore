@@ -72,22 +72,26 @@ public class Currency
          * @param currency The currency that requires a player to be online to be interacted with.
          */
         public PlayerNotOnlineForCurrencyInteractionException(UUID playerId, Currency currency)
-        { super(getErrorMsg(playerId, currency.getName())); }
+        {
+            super(getErrorMsg(playerId, currency.getName()));
+            this.playerId = playerId;
+            this.currency = currency;
+        }
 
         private static String getErrorMsg(UUID playerId, String currencyName)
         {
             String playerName = UsernameCache.getLastKnownUsername(playerId);
 
             if(playerName == null)
-                return "The player with the ID " + playerId.toString() + " was not online for the currency \""
-                       + currencyName + "\" to interact with.";
+                return "The player with the ID " + playerId + " was not online for the currency \"" + currencyName
+                       + "\" to interact with.";
 
             return "The player " + playerName + " was not online for the currency \"" + currencyName + "\" to interact "
                    + "with.";
         }
 
-        UUID playerId;
-        Currency currency;
+        protected final UUID playerId;
+        protected final Currency currency;
 
         /**
          * Gets the ID of the player that was offline.

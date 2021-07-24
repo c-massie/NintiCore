@@ -77,7 +77,7 @@ public final class Permissions
          * Suggests a number of new permissions.
          * @param permissions The permissions to be suggested.
          */
-        public void suggestPermissions(List<String> permissions)
+        public void suggestPermissions(Collection<String> permissions)
         {
             if(isUnmodified)
             {
@@ -458,7 +458,7 @@ public final class Permissions
             synchronized(registry)
             {
                 for(String perm : perms)
-                    registry.assignGroupPermission(groupId, presetName);
+                    registry.assignGroupPermission(groupId, perm);
             }
         }
         //endregion
@@ -609,7 +609,7 @@ public final class Permissions
                 if(username == null)
                     username = "???";
 
-                return username + " - " + uuid.toString();
+                return username + " - " + uuid;
             },
             name -> UUID.fromString(name.substring(name.length() - uuidStringLength)),
             Paths.get("permissions.txt"),
@@ -665,7 +665,7 @@ public final class Permissions
      * @return True if the command is being run by something that doesn't need permission (like the server console) or
      *         if the source has all the given permissions. Otherwise, false.
      */
-    public static boolean commandSourceHasPermission(CommandContext<CommandSource> commandContext,
+    public static boolean commandSourceHasPermission(CommandContext<? extends CommandSource> commandContext,
                                                      String... permissions)
     { return commandSourceHasPermission(commandContext.getSource(), permissions); }
 
@@ -689,8 +689,8 @@ public final class Permissions
         if(PluginUtils.playerIsOp(sourcePlayer))
             return true;
 
-        List<String> permissionChecks = new ArrayList<>();
-        List<String> groupChecks = new ArrayList<>();
+        Collection<String> permissionChecks = new ArrayList<>();
+        Collection<String> groupChecks = new ArrayList<>();
 
         for(String p : permissions)
             if(p.startsWith("#"))
@@ -783,7 +783,7 @@ public final class Permissions
      * @throws PlayerMissingPermissionException If the command is being run by something that needs permission (that is,
      *                                          a player) and the source does not have all the given permissions.
      */
-    public static void assertCommandSourceHasPermission(CommandContext<CommandSource> commandContext,
+    public static void assertCommandSourceHasPermission(CommandContext<? extends CommandSource> commandContext,
                                                         String... permissions)
             throws PlayerMissingPermissionException
     { assertCommandSourceHasPermission(commandContext.getSource(), permissions); }
@@ -808,8 +808,6 @@ public final class Permissions
 
         if(PluginUtils.playerIsOp(sourcePlayer))
             return;
-
-        List<String> permissionChecks = new ArrayList<>();
 
         synchronized(registry)
         {
@@ -844,7 +842,7 @@ public final class Permissions
         { return registry.userHasAnySubPermissionOf(player.getUniqueID(), permission); }
     }
 
-    public static boolean commandSourceHasAnyPermissionUnder(CommandContext<CommandSource> commandContext,
+    public static boolean commandSourceHasAnyPermissionUnder(CommandContext<? extends CommandSource> commandContext,
                                                              String... permissions)
     { return commandSourceHasAnyPermissionUnder(commandContext.getSource(), permissions); }
 

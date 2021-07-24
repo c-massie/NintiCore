@@ -16,11 +16,11 @@ public class NoSuchWorldException extends RuntimeException
         this.worldId = worldId;
     }
 
-    final String worldId;
+    protected final String worldId;
 
     /**
      * Gets the world ID that doesn't match any existing world.
-     * @return
+     * @return The world ID.
      */
     public String getWorldId()
     { return worldId; }

@@ -29,7 +29,9 @@ import java.util.function.Supplier;
 import static net.minecraft.command.Commands.*;
 import static scot.massie.mc.ninti.core.PluginUtils.*;
 
-public class ZonesCommandHandler
+// Making CommandContext<CommandSource> CommandContext<? extends CommandSource> doesn't make sense in this context.
+@SuppressWarnings("BoundedWildcard")
+public final class ZonesCommandHandler
 {
     /*
 
@@ -62,7 +64,6 @@ public class ZonesCommandHandler
     {}
 
     private static final int cacheTimeoutInSeconds = 15;
-    private static final String dontHavePermission = "You don't have permission to do that.";
     private static final String noSuggestionsSuggestion = "(No suggestions)";
 
     private static final Supplier<List<String>> cachedZoneNames
@@ -263,7 +264,7 @@ public class ZonesCommandHandler
     {
         Entity sourceEntity = cmdContext.getSource().getEntity();
         String worldId = sourceEntity == null ? getDefaultWorldId()
-                                              : getWorldId((ServerWorld)sourceEntity.getEntityWorld());
+                                              : getWorldId(sourceEntity.getEntityWorld());
         int x = IntegerArgumentType.getInteger(cmdContext, "coörd arg 1");
         int z = IntegerArgumentType.getInteger(cmdContext, "coörd arg 2");
 
@@ -279,7 +280,7 @@ public class ZonesCommandHandler
     {
         Entity sourceEntity = cmdContext.getSource().getEntity();
         String worldId = sourceEntity == null ? getDefaultWorldId()
-                                              : getWorldId((ServerWorld)sourceEntity.getEntityWorld());
+                                              : getWorldId(sourceEntity.getEntityWorld());
         int x = IntegerArgumentType.getInteger(cmdContext, "coörd arg 1");
         int y = IntegerArgumentType.getInteger(cmdContext, "coörd arg 2");
         int z = IntegerArgumentType.getInteger(cmdContext, "coörd arg 3");
@@ -327,7 +328,7 @@ public class ZonesCommandHandler
 
         Entity sourceEntity = cmdContext.getSource().getEntity();
         String impliedWorldId = sourceEntity != null
-                                        ? getWorldId((ServerWorld)sourceEntity.getEntityWorld())
+                                        ? getWorldId(sourceEntity.getEntityWorld())
                                         : getDefaultWorldId();
 
         Zones.register(new Zone(zoneName, impliedWorldId));
@@ -354,7 +355,7 @@ public class ZonesCommandHandler
             return 1;
         }
 
-        String worldId = getWorldId((ServerWorld)(sourceEntity.getEntityWorld()));
+        String worldId = getWorldId(sourceEntity.getEntityWorld());
         Zone zone = new Zone(zoneName, worldId);
         zone.addRegion(Zone.ZoneRegionRectangle.ofEntitysChunk(sourceEntity));
         Zones.register(zone);
@@ -380,7 +381,7 @@ public class ZonesCommandHandler
         int fromZ = IntegerArgumentType.getInteger(cmdContext, "coörd arg 2");
         int toX = IntegerArgumentType.getInteger(cmdContext, "coörd arg 3");
         int toZ = IntegerArgumentType.getInteger(cmdContext, "coörd arg 4");
-        Zone.ZoneRegionRectangle region = new Zone.ZoneRegionRectangle(fromX, fromZ, toX, toZ);
+        Zone.ZoneRegion region = new Zone.ZoneRegionRectangle(fromX, fromZ, toX, toZ);
 
         if(Zones.addToZoneIfThere(zoneName, region) == null)
             sendMessage(cmdContext, "No zone found by the name " + zoneName);
@@ -397,7 +398,7 @@ public class ZonesCommandHandler
         int toX = IntegerArgumentType.getInteger(cmdContext, "coörd arg 4");
         int toY = IntegerArgumentType.getInteger(cmdContext, "coörd arg 5");
         int toZ = IntegerArgumentType.getInteger(cmdContext, "coörd arg 6");
-        Zone.ZoneRegionCuboid region = new Zone.ZoneRegionCuboid(fromX, fromY, fromZ, toX, toY, toZ);
+        Zone.ZoneRegion region = new Zone.ZoneRegionCuboid(fromX, fromY, fromZ, toX, toY, toZ);
 
         if(Zones.addToZoneIfThere(zoneName, region) == null)
             sendMessage(cmdContext, "No zone found by the name " + zoneName);
@@ -425,7 +426,7 @@ public class ZonesCommandHandler
             return 1;
         }
 
-        String worldId = getWorldId((ServerWorld)(sourceEntity.getEntityWorld()));
+        String worldId = getWorldId(sourceEntity.getEntityWorld());
 
         if(!existingZone.getWorldId().equals(worldId))
         {
@@ -503,7 +504,7 @@ public class ZonesCommandHandler
             return 1;
         }
 
-        String worldId = getWorldId((ServerWorld)(sourceEntity.getEntityWorld()));
+        String worldId = getWorldId(sourceEntity.getEntityWorld());
 
         if(!existingZone.getWorldId().equals(worldId))
         {

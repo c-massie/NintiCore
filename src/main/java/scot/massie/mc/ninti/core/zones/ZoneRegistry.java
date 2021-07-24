@@ -39,7 +39,7 @@ public final class ZoneRegistry
     public ZoneRegistry(File filePath)
     { this.filePath = filePath.toPath(); }
 
-    final Map<String, Zone> zones = new HashMap<>();
+    private final Map<String, Zone> zones = new HashMap<>();
     private final Path filePath;
     private boolean changedSinceLoad = false;
 
@@ -394,7 +394,8 @@ public final class ZoneRegistry
         if(!changedSinceLoad)
             return;
 
-        filePath.getParent().toFile().mkdirs();
+        if(!filePath.getParent().toFile().mkdirs())
+            throw new RuntimeException("Could not create the directory the zone file should be in.");
 
         try(BufferedWriter writer = Files.newBufferedWriter(filePath))
         { writeZones(writer); }
@@ -429,10 +430,10 @@ public final class ZoneRegistry
      */
     private static String zoneToString(Zone zone)
     {
-        String result = zone.getName() + ": " + zone.getWorldId();
+        StringBuilder result = new StringBuilder(zone.getName() + ": " + zone.getWorldId());
 
         for(Zone.ZoneRegion region : zone.getRegions())
-            result += "\n    " + zoneRegionToString(region);
+            result.append("\n    ").append(zoneRegionToString(region));
 
         return result + "\n\n";
     }

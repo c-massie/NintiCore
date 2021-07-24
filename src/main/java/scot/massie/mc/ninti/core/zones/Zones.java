@@ -4,13 +4,9 @@ import net.minecraft.entity.Entity;
 import scot.massie.mc.ninti.core.NintiCore;
 import scot.massie.mc.ninti.core.utilclasses.EntityLocation;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.Writer;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Static registry for registering areas of the server's worlds to be identifiable by name. Provides a static interface

@@ -1,15 +1,13 @@
 package scot.massie.mc.ninti.core;
 
-import com.google.common.collect.Lists;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.command.CommandSource;
+import net.minecraft.command.ICommandSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.OpEntry;
-import net.minecraft.util.registry.SimpleRegistry;
 import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.world.Dimension;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.UsernameCache;
@@ -30,7 +28,7 @@ public final class PluginUtils
     /**
      * Repository for miscellaneous minecraft-related comparators.
      */
-    public static class Comparators
+    public static final class Comparators
     {
         private Comparators()
         {}
@@ -68,7 +66,11 @@ public final class PluginUtils
      * The instance of the minecraft server. This is not arbitrarily accessible, so a reference is stored here when the
      * mod loads, as it can be accessed from the server startup event.
      */
+    @SuppressWarnings("PackageVisibleField")
+    // Supposed to be package-private, has to be accessed from NintiCore to be initialised.
     static MinecraftServer minecraftServer;
+
+    private static final UUID senderlessMessageSenderId = UUID.fromString("fb8d8806-514e-4db6-bed1-0523805858bc");
 
     /**
      * Gets the minecraft server.
@@ -100,7 +102,7 @@ public final class PluginUtils
      *         considered a mod.)
      */
     public static String getWorldId(WorldEvent.Save worldSaveEvent)
-    { return getWorldId((ServerWorld)(worldSaveEvent.getWorld())); }
+    { return getWorldId((World)(worldSaveEvent.getWorld())); }
 
     /**
      * Gets The world represented by the given ID.
@@ -151,7 +153,7 @@ public final class PluginUtils
      * @param cmdContext The context of the command.
      * @param msg The message to send to whoever is sending the command.
      */
-    public static void sendMessage(CommandContext<CommandSource> cmdContext, String msg)
+    public static void sendMessage(CommandContext<? extends CommandSource> cmdContext, String msg)
     { cmdContext.getSource().sendFeedback(new StringTextComponent(msg), true); }
 
     /**
@@ -159,11 +161,11 @@ public final class PluginUtils
      * @param player The player to send a message to.
      * @param msg The message to send.
      */
-    public static void sendMessage(PlayerEntity player, String msg)
+    public static void sendMessage(ICommandSource player, String msg)
     {
         // References to PlayerEntity.sendMessage(...) don't list a second parameter, the UUID. I've passed in null.
         // TO DO: Test to see if this is usable, or if it results in a null pointer error.
-        player.sendMessage(new StringTextComponent(msg), null);
+        player.sendMessage(new StringTextComponent(msg), senderlessMessageSenderId);
     }
 
     /**
@@ -207,10 +209,8 @@ public final class PluginUtils
         Collection<OpEntry> opEntries = minecraftServer.getPlayerList().getOppedPlayers().getEntries();
 
         for(OpEntry entry : opEntries)
-        {
-            if(entry.value.getId().equals(playerId))
+            if(entry.value != null && entry.value.getId().equals(playerId))
                 return true;
-        }
 
         return false;
     }

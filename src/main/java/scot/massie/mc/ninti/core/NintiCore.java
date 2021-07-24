@@ -9,8 +9,6 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import scot.massie.mc.ninti.core.currencies.Currencies;
 import scot.massie.mc.ninti.core.currencies.Currency;
 import scot.massie.mc.ninti.core.zones.Zones;
@@ -47,15 +45,13 @@ public class NintiCore
 
     public static final Path DATA_FOLDER = PluginUtils.getPluginDataFolder().resolve("ninti");
 
-    // Directly reference a log4j logger.
-    private static final Logger LOGGER = LogManager.getLogger();
-
     public NintiCore()
     {
         // Register the setup method for modloading
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
 
         // Register ourselves for server and other game events we are interested in
+        //noinspection ThisEscapedInObjectConstruction
         MinecraftForge.EVENT_BUS.register(this);
 
         PluginEvents.onDataLoaded.register(args ->
