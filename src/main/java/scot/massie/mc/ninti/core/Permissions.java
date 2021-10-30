@@ -796,7 +796,7 @@ public final class Permissions
      *                                          a player) and the source does not have all the given permissions.
      */
     public static void assertCommandSourceHasPermission(CommandSource commandSource,
-                                                           String... permissions)
+                                                        String... permissions)
             throws PlayerMissingPermissionException
     {
         Entity sourceEntity = commandSource.getEntity();
