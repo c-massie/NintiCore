@@ -13,6 +13,8 @@ import scot.massie.lib.events.SetEvent;
 import scot.massie.lib.events.args.EventArgs;
 import scot.massie.lib.permissions.PermissionStatus;
 import scot.massie.lib.permissions.PermissionsRegistry;
+import scot.massie.lib.permissions.decorators.PermissionsRegistryWithEvents;
+import scot.massie.lib.permissions.decorators.ThreadsafePermissionsRegistry;
 import scot.massie.lib.permissions.exceptions.UserMissingPermissionException;
 import scot.massie.mc.ninti.core.exceptions.PlayerMissingPermissionException;
 
@@ -601,7 +603,8 @@ public final class Permissions
      */
     static final int uuidStringLength = 36;
 
-    private static final PermissionsRegistry<UUID> registry = new PermissionsRegistry<>(
+    private static final PermissionsRegistry<UUID> _innerRegistry = new PermissionsRegistry<>
+    (
             uuid ->
             {
                 String username = UsernameCache.getLastKnownUsername(uuid);
@@ -612,8 +615,14 @@ public final class Permissions
                 return username + " - " + uuid;
             },
             name -> UUID.fromString(name.substring(name.length() - uuidStringLength)),
+
             Paths.get("permissions.txt"),
-            Paths.get("permission_groups.txt"));
+            Paths.get("permission_groups.txt")
+    );
+
+    public static final PermissionsRegistryWithEvents<UUID> registry
+            = new PermissionsRegistryWithEvents<>(new ThreadsafePermissionsRegistry<>(_innerRegistry));
+
     //endregion
 
     //region methods
@@ -635,8 +644,7 @@ public final class Permissions
         if(PluginUtils.playerIsOp(playerId))
             return true;
 
-        synchronized(registry)
-        { return registry.userHasPermission(playerId, permission); }
+        return registry.userHasPermission(playerId, permission);
     }
 
     /**
@@ -654,8 +662,7 @@ public final class Permissions
         if(PluginUtils.playerIsOp(player))
             return true;
 
-        synchronized(registry)
-        { return registry.userHasPermission(player.getUniqueID(), permission); }
+        return registry.userHasPermission(player.getUniqueID(), permission);
     }
 
     /**
