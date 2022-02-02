@@ -82,8 +82,35 @@ public final class EntityLocation
         { throw new IllegalArgumentException("String passed was not parsable as an entity location."); }
     }
 
+    /**
+     * The unique name of the world this represents a location in.
+     */
     private final String worldId;
-    private final double x, y, z, pitch, yaw;
+
+    /**
+     * The X coördinate.
+     */
+    private final double x;
+
+    /**
+     * The Y coördinate.
+     */
+    private final double y;
+
+    /**
+     * The Z coördinate.
+     */
+    private final double z;
+
+    /**
+     * The pitch - how far up or down this location represents something looking.
+     */
+    private final double pitch;
+
+    /**
+     * The yaw - how far left or right this location represents something looking.
+     */
+    private final double yaw;
 
     /**
      * Gets the ID of the world the location is in.
